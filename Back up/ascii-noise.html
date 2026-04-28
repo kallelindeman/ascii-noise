@@ -35,7 +35,11 @@
     border-bottom: 1px solid #222;
   }
 
-  .group { display: flex; flex-direction: column; gap: 8px; }
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
   .group-label {
     font-size: 10px;
@@ -44,7 +48,11 @@
     color: #555;
   }
 
-  .control { display: flex; flex-direction: column; gap: 3px; }
+  .control {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
 
   .control label {
     font-size: 11px;
@@ -53,7 +61,11 @@
     justify-content: space-between;
   }
 
-  .control label span { color: #5af; min-width: 36px; text-align: right; }
+  .control label span {
+    color: #5af;
+    min-width: 36px;
+    text-align: right;
+  }
 
   input[type=range] {
     width: 100%;
@@ -67,13 +79,14 @@
 
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 12px; height: 12px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: #5af;
     cursor: pointer;
   }
 
-  select, input[type=text], input[type=number] {
+  select, input[type=text] {
     background: #1a1a1a;
     border: 1px solid #2a2a2a;
     color: #ccc;
@@ -85,24 +98,18 @@
     border-radius: 2px;
   }
 
-  input[type=number] { -moz-appearance: textfield; }
-  input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+  select:focus, input[type=text]:focus { border-color: #5af; }
 
-  select:focus, input[type=text]:focus, input[type=number]:focus { border-color: #5af; }
-
-  .size-row {
+  .hex-row {
     display: flex;
+    align-items: center;
     gap: 6px;
   }
 
-  .size-row .control { flex: 1; }
-  .size-row .control label { font-size: 10px; }
-
-  .hex-row { display: flex; align-items: center; gap: 6px; }
-
   .hex-row input[type=color] {
     -webkit-appearance: none;
-    width: 28px; height: 22px;
+    width: 28px;
+    height: 22px;
     border: 1px solid #2a2a2a;
     border-radius: 2px;
     padding: 1px;
@@ -129,7 +136,12 @@
     color: #999;
   }
 
-  .toggle { position: relative; width: 32px; height: 16px; }
+  .toggle {
+    position: relative;
+    width: 32px;
+    height: 16px;
+  }
+
   .toggle input { display: none; }
 
   .toggle-track {
@@ -152,7 +164,10 @@
   }
 
   .toggle input:checked + .toggle-track { background: #1a3a5a; }
-  .toggle input:checked + .toggle-track::after { transform: translateX(16px); background: #5af; }
+  .toggle input:checked + .toggle-track::after {
+    transform: translateX(16px);
+    background: #5af;
+  }
 
   button {
     background: #1a1a1a;
@@ -171,73 +186,16 @@
   button:hover { border-color: #5af; color: #5af; }
   button.active { border-color: #5af; color: #5af; }
 
-  .preset-row { display: flex; gap: 4px; flex-wrap: wrap; }
-
-  .preset-btn {
-    flex: 1;
-    min-width: 0;
-    font-size: 9px;
-    padding: 4px 2px;
-    letter-spacing: 0;
-  }
-
-  #btn-export {
-    background: #0a1a2a;
-    border-color: #5af;
-    color: #5af;
-    font-size: 12px;
-    letter-spacing: 1.5px;
-  }
-  #btn-export:hover { background: #0d2a3d; }
-
   #output {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    padding: 16px;
-    background: #060606;
+    background: #0a0a0a;
   }
 
-  #canvas {
-    display: block;
-    max-width: 100%;
-    max-height: 100%;
-    /* canvas naturally holds aspect ratio with these two constraints */
-  }
-
-  #tile-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-  }
-
-  .tile-btn {
-    aspect-ratio: 1;
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 2px;
-    padding: 6px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.15s, background 0.15s;
-    width: 100%;
-  }
-
-  .tile-btn svg { width: 100%; height: 100%; display: block; }
-  .tile-btn svg circle { stroke: #555; fill: none; transition: stroke 0.15s, fill 0.15s; }
-  .tile-btn svg circle.solid { fill: #555; stroke: none; }
-  .tile-btn svg path { stroke: #555; transition: stroke 0.15s; }
-
-  .tile-btn:hover { border-color: #5af; }
-
-  .tile-btn.active { border-color: #5af; background: #0d2030; }
-  .tile-btn.active svg circle { stroke: #5af; }
-  .tile-btn.active svg circle.solid { fill: #5af; }
-  .tile-btn.active svg path { stroke: #5af; }
+  #canvas { display: block; }
 
   #drop-zone {
     border: 1px dashed #2a2a2a;
@@ -253,11 +211,6 @@
   #drop-zone:hover, #drop-zone.drag-over { border-color: #5af; color: #5af; }
   #drop-zone.has-image { border-color: #5a5; color: #5a5; }
 
-  /* color noise section accent */
-  .group-label.color-label { color: #a55; }
-  .group.color-group input[type=range]::-webkit-slider-thumb { background: #f85; }
-  .group.color-group .control label span { color: #f85; }
-
   .fps {
     font-size: 9px;
     color: #333;
@@ -266,6 +219,11 @@
     padding-top: 8px;
     border-top: 1px solid #1a1a1a;
   }
+
+  /* color noise section accent */
+  .group-label.color-label { color: #a55; }
+  .group.color-group input[type=range]::-webkit-slider-thumb { background: #f85; }
+  .group.color-group .control label span { color: #f85; }
 </style>
 </head>
 <body>
@@ -273,67 +231,58 @@
 <div id="controls">
   <h1>ASCII Noise</h1>
 
-  <!-- ① CANVAS SIZE — master, everything derives from this -->
-  <div class="group">
-    <div class="group-label">Canvas</div>
-    <div class="size-row">
-      <div class="control">
-        <label>Width</label>
-        <input type="number" id="canvasW" value="1920" min="100" max="7680" step="1">
-      </div>
-      <div class="control">
-        <label>Height</label>
-        <input type="number" id="canvasH" value="1080" min="100" max="7680" step="1">
-      </div>
-    </div>
-    <div class="preset-row">
-      <button class="preset-btn" data-w="1080" data-h="1080">1:1</button>
-      <button class="preset-btn" data-w="1080" data-h="1920">9:16</button>
-      <button class="preset-btn" data-w="1920" data-h="1080">16:9</button>
-      <button class="preset-btn" data-w="1584" data-h="396">LI</button>
-      <button class="preset-btn" data-w="851"  data-h="315">FB</button>
-    </div>
-    <div class="control">
-      <label>Render scale <span id="v-renderscale">2</span>×</label>
-      <input type="range" id="renderscale" min="1" max="4" value="2" step="1">
-    </div>
-  </div>
-
-  <!-- ② GRID -->
   <div class="group">
     <div class="group-label">Grid</div>
     <div class="control">
-      <label>Size <span id="v-cellsize">24</span>px</label>
-      <input type="range" id="cellsize" min="4" max="120" value="24" step="1">
+      <label>Cols <span id="v-cols">80</span></label>
+      <input type="range" id="cols" min="20" max="160" value="80" step="1">
     </div>
     <div class="control">
-      <label>Spacing <span id="v-spacing">4</span>px</label>
-      <input type="range" id="spacing" min="0" max="60" value="4" step="1">
+      <label>Rows <span id="v-rows">40</span></label>
+      <input type="range" id="rows" min="10" max="80" value="40" step="1">
     </div>
-    <div id="grid-info" style="font-size:10px;color:#444;text-align:right">80 × 45 cells</div>
+    <div class="control">
+      <label>Font size <span id="v-fontsize">10</span>px</label>
+      <input type="range" id="fontsize" min="6" max="20" value="10" step="1">
+    </div>
+    <div class="control">
+      <label>Col spacing <span id="v-colspacing">1.00</span>×</label>
+      <input type="range" id="colspacing" min="0.5" max="3.0" value="1.0" step="0.01">
+    </div>
+    <div class="control">
+      <label>Row spacing <span id="v-rowspacing">1.20</span>×</label>
+      <input type="range" id="rowspacing" min="0.5" max="3.0" value="1.2" step="0.01">
+    </div>
   </div>
 
-  <!-- ③ TILES -->
   <div class="group">
-    <div class="group-label">Tiles</div>
-    <div id="tile-grid"></div>
-    <div class="toggle-row">
-      Allow blank cells
-      <label class="toggle">
-        <input type="checkbox" id="allowblank" checked>
-        <div class="toggle-track"></div>
-      </label>
+    <div class="group-label">Cursor glow</div>
+    <div class="control">
+      <label>Radius <span id="v-glowradius">120</span>px</label>
+      <input type="range" id="glowradius" min="10" max="400" value="120" step="1">
     </div>
-    <div class="toggle-row">
-      Invert
-      <label class="toggle">
-        <input type="checkbox" id="invert">
-        <div class="toggle-track"></div>
-      </label>
+    <div class="control">
+      <label>Strength <span id="v-glowstrength">0.80</span></label>
+      <input type="range" id="glowstrength" min="0" max="2.0" value="0.8" step="0.01">
+    </div>
+    <div class="control">
+      <label>Falloff <span id="v-glowfalloff">2.00</span></label>
+      <input type="range" id="glowfalloff" min="0.5" max="6.0" value="2.0" step="0.1">
     </div>
   </div>
 
-  <!-- ④ NOISE — SHAPE -->
+  <div class="group">
+    <div class="group-label">Font</div>
+    <input type="text" id="fontfamily" value="Courier New" placeholder="font name or Google Fonts URL">
+    <div style="display:flex;gap:6px">
+      <button id="btn-loadfont" style="flex:1">LOAD</button>
+    </div>
+    <div id="font-status" style="font-size:10px;color:#555;min-height:14px"></div>
+    <div style="font-size:10px;color:#444;line-height:1.5">
+      Use any installed font name, or paste a Google Fonts @import URL and press Load.
+    </div>
+  </div>
+
   <div class="group">
     <div class="group-label">Noise — Shape</div>
     <div class="control">
@@ -362,7 +311,26 @@
     </div>
   </div>
 
-  <!-- ⑥ DISPLAY -->
+  <div class="group">
+    <div class="group-label">Characters</div>
+    <select id="charset-preset">
+      <option value="dense">Dense</option>
+      <option value="simple">Simple</option>
+      <option value="block">Block</option>
+      <option value="dots">Dots</option>
+      <option value="binary">Binary</option>
+      <option value="custom">Custom</option>
+    </select>
+    <input type="text" id="charset-custom" value="@#S%?*+;:,. " placeholder="dark → light chars">
+    <div class="toggle-row">
+      Invert
+      <label class="toggle">
+        <input type="checkbox" id="invert">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+  </div>
+
   <div class="group">
     <div class="group-label">Display</div>
     <div class="control">
@@ -391,7 +359,6 @@
     </div>
   </div>
 
-  <!-- ⑦ NOISE — COLOR -->
   <div class="group color-group">
     <div class="group-label color-label">Noise — Color</div>
     <div class="control">
@@ -463,7 +430,6 @@
     </div>
   </div>
 
-  <!-- ⑨ IMAGE -->
   <div class="group">
     <div class="group-label">Image</div>
     <div id="drop-zone">DROP IMAGE / CLICK</div>
@@ -479,11 +445,8 @@
         <div class="toggle-track"></div>
       </label>
     </div>
-    <button id="btn-clearimg">CLEAR IMAGE</button>
+    <button id="btn-clearimg" style="margin-top:2px">CLEAR IMAGE</button>
   </div>
-
-  <!-- ⑩ EXPORT -->
-  <button id="btn-export">↓ EXPORT PNG</button>
 
   <button id="btn-pause" class="active">PAUSE</button>
   <button id="btn-reset">RESET TIME</button>
@@ -501,7 +464,9 @@ function hash(x, y) {
   const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
   return n - Math.floor(n);
 }
+
 function smoothstep(t) { return t * t * (3 - 2 * t); }
+
 function valueNoise(x, y) {
   const ix = Math.floor(x), iy = Math.floor(y);
   const fx = x - ix, fy = y - iy;
@@ -510,93 +475,35 @@ function valueNoise(x, y) {
   const c = hash(ix,   iy+1), d = hash(ix+1, iy+1);
   return a + (b-a)*ux + (c-a)*uy + (a-b-c+d)*ux*uy;
 }
+
 function fbm(x, y, octaves, lacunarity, gain) {
   let v = 0, amp = 1, freq = 1, max = 0;
   for (let i = 0; i < octaves; i++) {
-    v += valueNoise(x * freq, y * freq) * amp;
-    max += amp; amp *= gain; freq *= lacunarity;
+    v   += valueNoise(x * freq, y * freq) * amp;
+    max += amp;
+    amp  *= gain;
+    freq *= lacunarity;
   }
   return v / max;
 }
 
-// ── Tile system ──────────────────────────────────────────────
-// 6 tile shapes ported from the SVG assets, ordered by ink density
-// (heaviest first → lightest last). Indices 0..5. Index 6 = blank.
-// Drawing functions take (ctx, cx, cy, size, color)
-const TILE_DRAWS = [
-  // 0: full disk (heaviest)  — assets/3.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(cx, cy, s * 0.499, 0, Math.PI*2); ctx.fill();
-  },
-  // 1: ring + filled dot     — assets/4.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.fillStyle = color; ctx.strokeStyle = color;
-    ctx.lineWidth = s * (8/120);
-    ctx.beginPath(); ctx.arc(cx, cy, s * (55.87/120), 0, Math.PI*2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, s * (14.97/120), 0, Math.PI*2); ctx.fill();
-  },
-  // 2: ring + 3 vertical lines — assets/6.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = s * (8/120);
-    ctx.beginPath(); ctx.arc(cx, cy, s * (55.87/120), 0, Math.PI*2); ctx.stroke();
-    // 3 vertical chords
-    const xs = [29.93, 59.86, 89.79];
-    const ys = [[14.39, 104.18], [4.41, 114.16], [14.39, 104.18]];
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(cx - s/2 + s * xs[i] / 120, cy - s/2 + s * ys[i][0] / 120);
-      ctx.lineTo(cx - s/2 + s * xs[i] / 120, cy - s/2 + s * ys[i][1] / 120);
-      ctx.stroke();
-    }
-  },
-  // 3: two concentric rings   — assets/5.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = s * (8/120);
-    ctx.beginPath(); ctx.arc(cx, cy, s * (55.87/120), 0, Math.PI*2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, s * (30.93/120), 0, Math.PI*2); ctx.stroke();
-  },
-  // 4: single ring            — assets/2.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = s * (8/120);
-    ctx.beginPath(); ctx.arc(cx, cy, s * (55.87/120), 0, Math.PI*2); ctx.stroke();
-  },
-  // 5: small filled dot       — assets/1.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(cx, cy, s * (16/120), 0, Math.PI*2); ctx.fill();
-  },
-];
-
-// SVG markup for the UI preview buttons (one per tile, same density order)
-const TILE_PREVIEWS = [
-  '<svg viewBox="0 0 120 120"><circle class="solid" cx="60" cy="60" r="59"/></svg>',
-  '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="55.87" stroke-width="8"/><circle class="solid" cx="60" cy="60" r="14.97"/></svg>',
-  '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="55.87" stroke-width="8"/><path d="M29.93 14.39 V104.18" stroke-width="8"/><path d="M59.86 4.41 V114.16" stroke-width="8"/><path d="M89.79 14.39 V104.18" stroke-width="8"/></svg>',
-  '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="55.87" stroke-width="8"/><circle cx="60" cy="60" r="30.93" stroke-width="8"/></svg>',
-  '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="55.87" stroke-width="8"/></svg>',
-  '<svg viewBox="0 0 120 120"><circle class="solid" cx="60" cy="60" r="16"/></svg>',
-];
-
 // ── State ────────────────────────────────────────────────────
+const charsets = {
+  dense:  '@#S%?*+;:,. ',
+  simple: '#=+-:. ',
+  block:  '█▓▒░ ',
+  dots:   '●◉◎○◌ ',
+  binary: '10 ',
+};
+
 const P = {
-  // canvas — master
-  canvasW: 1920, canvasH: 1080,
-  renderscale: 2,
-  // grid — derived from these two
-  cellsize: 24, spacing: 4,
-  // tiles — boolean per tile, all on by default
-  tiles: [true, true, true, true, true, true],
-  allowblank: true,
   // shape noise
+  cols: 80, rows: 40, fontsize: 10,
+  colspacing: 1.0, rowspacing: 1.2,
   scale: 3, octaves: 4, lacunarity: 2.0, gain: 0.5,
   speed: 0.5, angle: 0,
   invert: false, brightness: 1.0, contrast: 1.0,
-  // background
-  bghue: 0, bgsat: 0, bglit: 4,
+  charset: charsets.dense,
   // color noise
   cscale: 4.0, cspeed: 0.3, cangle: 45,
   basehue: 200, huespread: 120,
@@ -604,16 +511,20 @@ const P = {
   colorequalize: false,
   bandlo: 0, bandhi: 100,
   fbhue: 0, fbsat: 0, fblit: 20,
-  // image
-  imgmix: 0, imginvert: false,
+  // font
+  fontfamily: 'Courier New',
+  // background
+  bghue: 0, bgsat: 0, bglit: 4,
+  // cursor glow
+  glowradius: 120, glowstrength: 0.8, glowfalloff: 2.0,
 };
 
 let t = 0, tc = 0, paused = false;
 let lastFrame = performance.now(), frameCount = 0, fpsTimer = 0;
 
-// ── Slider bindings ───────────────────────────────────────────
+// ── Controls wiring ──────────────────────────────────────────
 function bind(id, key, fmt) {
-  const el  = document.getElementById(id);
+  const el = document.getElementById(id);
   const vEl = document.getElementById('v-' + id);
   el.addEventListener('input', () => {
     P[key] = parseFloat(el.value);
@@ -621,91 +532,77 @@ function bind(id, key, fmt) {
   });
 }
 
-bind('cellsize',    'cellsize',    v => v|0);
-bind('spacing',     'spacing',     v => v|0);
-bind('renderscale', 'renderscale', v => v|0);
-bind('scale',       'scale',       v => v.toFixed(1));
-bind('octaves',     'octaves',     v => v|0);
-bind('lacunarity',  'lacunarity',  v => v.toFixed(1));
-bind('gain',        'gain',        v => v.toFixed(2));
-bind('speed',       'speed',       v => v.toFixed(2));
-bind('angle',       'angle',       v => (v|0) + '°');
-bind('brightness',  'brightness',  v => v.toFixed(2));
-bind('contrast',    'contrast',    v => v.toFixed(2));
-bind('cscale',      'cscale',      v => v.toFixed(1));
-bind('cspeed',      'cspeed',      v => v.toFixed(2));
-bind('cangle',      'cangle',      v => (v|0) + '°');
-bind('basehue',     'basehue',     v => (v|0) + '°');
-bind('huespread',   'huespread',   v => (v|0) + '°');
-bind('saturation',  'saturation',  v => v|0);
-bind('lightness',   'lightness',   v => v|0);
-bind('bandlo',      'bandlo',      v => (v|0) + '%');
-bind('bandhi',      'bandhi',      v => (v|0) + '%');
-bind('fbhue',       'fbhue',       v => (v|0) + '°');
-bind('fbsat',       'fbsat',       v => v|0);
-bind('fblit',       'fblit',       v => v|0);
-bind('imgmix',      'imgmix',      v => v.toFixed(2));
-
-// Canvas size inputs
+bind('cols',       'cols',       v => v|0);
+bind('rows',       'rows',       v => v|0);
+bind('fontsize',   'fontsize',   v => v|0);
+bind('colspacing', 'colspacing', v => v.toFixed(2));
+bind('rowspacing', 'rowspacing', v => v.toFixed(2));
+bind('scale',      'scale',      v => v.toFixed(1));
+bind('octaves',    'octaves',    v => v|0);
+bind('lacunarity', 'lacunarity', v => v.toFixed(1));
+bind('gain',       'gain',       v => v.toFixed(2));
+bind('speed',      'speed',      v => v.toFixed(2));
+bind('angle',      'angle',      v => (v|0) + '°');
+bind('brightness', 'brightness', v => v.toFixed(2));
+bind('contrast',   'contrast',   v => v.toFixed(2));
+bind('cscale',     'cscale',     v => v.toFixed(1));
+bind('cspeed',     'cspeed',     v => v.toFixed(2));
+bind('cangle',     'cangle',     v => (v|0) + '°');
+bind('basehue',    'basehue',    v => (v|0) + '°');
+bind('huespread',  'huespread',  v => (v|0) + '°');
+bind('saturation', 'saturation', v => v|0);
+bind('lightness',  'lightness',  v => v|0);
+bind('bandlo',     'bandlo',     v => (v|0) + '%');
+bind('bandhi',     'bandhi',     v => (v|0) + '%');
 const outputEl = document.getElementById('output');
-function applyCanvasSize() {
-  P.canvasW = parseInt(document.getElementById('canvasW').value) || 1920;
-  P.canvasH = parseInt(document.getElementById('canvasH').value) || 1080;
-  // sync bg colour of surrounding area
-  updateBg();
-}
-document.getElementById('canvasW').addEventListener('change', applyCanvasSize);
-document.getElementById('canvasH').addEventListener('change', applyCanvasSize);
-
-// Canvas presets
-document.querySelectorAll('.preset-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const w = parseInt(btn.dataset.w), h = parseInt(btn.dataset.h);
-    P.canvasW = w; P.canvasH = h;
-    document.getElementById('canvasW').value = w;
-    document.getElementById('canvasH').value = h;
-    updateBg();
-  });
-});
-
-// Background (special: also sets surrounding output bg)
 function updateBg() {
-  outputEl.style.background = `hsl(${P.bghue},${P.bgsat}%,${Math.max(0, P.bglit - 2)}%)`;
+  const c = `hsl(${P.bghue},${P.bgsat}%,${P.bglit}%)`;
+  outputEl.style.background = c;
 }
 ['bghue','bgsat','bglit'].forEach(id => {
+  const key = id;
+  const fmt = id === 'bghue' ? v => (v|0) + '°' : v => v|0;
   const el  = document.getElementById(id);
   const vEl = document.getElementById('v-' + id);
-  const fmt = id === 'bghue' ? v => (v|0) + '°' : v => v|0;
   el.addEventListener('input', () => {
-    P[id] = parseFloat(el.value);
-    if (vEl) vEl.textContent = fmt(P[id]);
+    P[key] = parseFloat(el.value);
+    if (vEl) vEl.textContent = fmt(P[key]);
     updateBg();
   });
 });
 updateBg();
+bind('fbhue',       'fbhue',       v => (v|0) + '°');
+bind('fbsat',       'fbsat',       v => v|0);
+bind('fblit',       'fblit',       v => v|0);
+bind('glowradius',  'glowradius',  v => v|0);
+bind('glowstrength','glowstrength',v => v.toFixed(2));
+bind('glowfalloff', 'glowfalloff', v => v.toFixed(2));
 
-// Toggles
-document.getElementById('invert').addEventListener('change',        e => { P.invert        = e.target.checked; });
-document.getElementById('colorequalize').addEventListener('change', e => { P.colorequalize = e.target.checked; });
-document.getElementById('imginvert').addEventListener('change',     e => { P.imginvert     = e.target.checked; });
-document.getElementById('allowblank').addEventListener('change',    e => { P.allowblank    = e.target.checked; });
-
-// Tile picker — render preview buttons
-const tileGrid = document.getElementById('tile-grid');
-TILE_PREVIEWS.forEach((svg, idx) => {
-  const btn = document.createElement('button');
-  btn.className = 'tile-btn' + (P.tiles[idx] ? ' active' : '');
-  btn.innerHTML = svg;
-  // Default stroke styling for preview SVGs
-  btn.querySelectorAll('svg circle:not(.solid), svg path').forEach(el => el.setAttribute('fill', 'none'));
-  btn.addEventListener('click', () => {
-    P.tiles[idx] = !P.tiles[idx];
-    btn.classList.toggle('active', P.tiles[idx]);
-  });
-  tileGrid.appendChild(btn);
+document.getElementById('invert').addEventListener('change', e => {
+  P.invert = e.target.checked;
+});
+document.getElementById('colorequalize').addEventListener('change', e => {
+  P.colorequalize = e.target.checked;
 });
 
-// Buttons
+// charset preset
+const presetEl = document.getElementById('charset-preset');
+const customEl = document.getElementById('charset-custom');
+presetEl.addEventListener('change', () => {
+  if (presetEl.value === 'custom') {
+    P.charset = customEl.value || ' .';
+  } else {
+    P.charset = charsets[presetEl.value];
+    customEl.value = P.charset;
+  }
+});
+customEl.addEventListener('input', () => {
+  presetEl.value = 'custom';
+  P.charset = customEl.value || ' .';
+});
+customEl.value = P.charset;
+
+// buttons
 document.getElementById('btn-pause').addEventListener('click', function() {
   paused = !paused;
   this.textContent = paused ? 'RESUME' : 'PAUSE';
@@ -713,14 +610,32 @@ document.getElementById('btn-pause').addEventListener('click', function() {
 });
 document.getElementById('btn-reset').addEventListener('click', () => { t = 0; tc = 0; });
 
-// ── Hex ↔ HSL ─────────────────────────────────────────────────
+// ── Canvas setup ─────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+let charW = 0, charH = 0;
+
+function measureFont() {
+  ctx.font = `${P.fontsize | 0}px "${P.fontfamily}", monospace`;
+  charW = ctx.measureText('M').width * P.colspacing;
+  charH = (P.fontsize | 0) * P.rowspacing;
+}
+measureFont();
+
+document.getElementById('fontsize').addEventListener('input', measureFont);
+document.getElementById('colspacing').addEventListener('input', measureFont);
+document.getElementById('rowspacing').addEventListener('input', measureFont);
+
+// ── Hex ↔ HSL conversion ─────────────────────────────────────
 function hexToHsl(hex) {
   const r = parseInt(hex.slice(1,3),16)/255;
   const g = parseInt(hex.slice(3,5),16)/255;
   const b = parseInt(hex.slice(5,7),16)/255;
   const max = Math.max(r,g,b), min = Math.min(r,g,b);
   let h, s, l = (max+min)/2;
-  if (max === min) { h = s = 0; } else {
+  if (max === min) { h = s = 0; }
+  else {
     const d = max - min;
     s = l > 0.5 ? d/(2-max-min) : d/(max+min);
     switch(max) {
@@ -731,16 +646,25 @@ function hexToHsl(hex) {
   }
   return [Math.round(h*360), Math.round(s*100), Math.round(l*100)];
 }
+
 function hslToHex(h, s, l) {
   s /= 100; l /= 100;
   const a = s * Math.min(l, 1-l);
-  const f = n => { const k = (n+h/30)%12; const c = l - a*Math.max(-1, Math.min(k-3, 9-k, 1)); return Math.round(255*c).toString(16).padStart(2,'0'); };
+  const f = n => {
+    const k = (n + h/30) % 12;
+    const c = l - a * Math.max(-1, Math.min(k-3, 9-k, 1));
+    return Math.round(255*c).toString(16).padStart(2,'0');
+  };
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
+// Groups: [colorPicker id, textInput id, hue slider, sat slider, lit slider]
+// For noise color, hue is basehue; spread/sat/lit are separate — we sync sat+lit only from hex,
+// and set basehue. huespread stays manual.
 function makeHexGroup(pickerId, textId, hueId, satId, litId, onUpdate) {
   const picker = document.getElementById(pickerId);
   const text   = document.getElementById(textId);
+
   function fromHex(hex) {
     if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
     const [h, s, l] = hexToHsl(hex);
@@ -754,41 +678,118 @@ function makeHexGroup(pickerId, textId, hueId, satId, litId, onUpdate) {
     text.value   = hex.toUpperCase();
     if (onUpdate) onUpdate();
   }
-  function syncFromSliders() {
-    const hex = hslToHex(P[hueId]||0, P[satId]||0, P[litId]||0);
-    picker.value = hex; text.value = hex.toUpperCase();
+
+  function toHex() {
+    return hslToHex(P[hueId]||0, P[satId]||0, P[litId]||0);
   }
+
+  function syncFromSliders() {
+    const hex = toHex();
+    picker.value = hex;
+    text.value   = hex.toUpperCase();
+  }
+
+  // picker → sliders
   picker.addEventListener('input', () => fromHex(picker.value));
-  function applyText() { let v = text.value.trim(); if (!v.startsWith('#')) v='#'+v; if (/^#[0-9a-fA-F]{6}$/.test(v)) fromHex(v); }
+
+  // text → sliders (on Enter or blur)
+  function applyText() {
+    let v = text.value.trim();
+    if (!v.startsWith('#')) v = '#' + v;
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) fromHex(v);
+  }
   text.addEventListener('blur', applyText);
   text.addEventListener('keydown', e => { if (e.key === 'Enter') applyText(); });
-  ;[hueId, satId, litId].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', syncFromSliders); });
+
+  // sliders → picker+text (hook into existing slider events)
+  ;[hueId, satId, litId].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', syncFromSliders);
+  });
+
+  // init display
   syncFromSliders();
 }
+
+// Wire up all three color groups
 makeHexGroup('hex-noise', 'hext-noise', 'basehue', 'saturation', 'lightness');
 makeHexGroup('hex-fb',    'hext-fb',    'fbhue',   'fbsat',       'fblit');
 makeHexGroup('hex-bg',    'hext-bg',    'bghue',   'bgsat',        'bglit', updateBg);
 
-// ── Canvas ────────────────────────────────────────────────────
-const canvas = document.getElementById('canvas');
-const ctx    = canvas.getContext('2d');
+// keep bg hex in sync when updateBg is called via sliders (already wired above)
+
+// ── Mouse tracking ────────────────────────────────────────────
+let mouseX = -9999, mouseY = -9999;
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  mouseX = (e.clientX - r.left) * (canvas.width  / r.width)  / (window.devicePixelRatio || 1);
+  mouseY = (e.clientY - r.top)  * (canvas.height / r.height) / (window.devicePixelRatio || 1);
+});
+canvas.addEventListener('mouseleave', () => { mouseX = -9999; mouseY = -9999; });
+
+// ── Font loader ───────────────────────────────────────────────
+const fontInput  = document.getElementById('fontfamily');
+const fontStatus = document.getElementById('font-status');
+
+document.getElementById('btn-loadfont').addEventListener('click', async () => {
+  const val = fontInput.value.trim();
+  if (!val) return;
+
+  // If it looks like a URL, inject it as a stylesheet
+  if (val.startsWith('http') || val.startsWith('@import')) {
+    const url = val.replace(/^@import\s+url\(["']?|["']?\);?$/g, '').trim();
+    const existing = document.getElementById('custom-font-link');
+    if (existing) existing.remove();
+    const link = document.createElement('link');
+    link.id   = 'custom-font-link';
+    link.rel  = 'stylesheet';
+    link.href = url;
+    document.head.appendChild(link);
+    // Extract family name from URL heuristic: ?family=Name or last path segment
+    const m = url.match(/family=([^&:]+)/);
+    if (m) {
+      P.fontfamily = decodeURIComponent(m[1].replace(/\+/g, ' '));
+      fontInput.value = P.fontfamily;
+    }
+    fontStatus.style.color = '#888';
+    fontStatus.textContent = 'Loading…';
+    await document.fonts.ready;
+  } else {
+    P.fontfamily = val;
+  }
+
+  // Check the font actually loaded
+  await document.fonts.ready;
+  const testFont = `16px "${P.fontfamily}", monospace`;
+  const loaded   = document.fonts.check(testFont);
+  fontStatus.style.color   = loaded ? '#5a5' : '#a55';
+  fontStatus.textContent   = loaded ? `✓ ${P.fontfamily}` : `⚠ not found, using fallback`;
+  measureFont();
+});
 
 // ── Image input ───────────────────────────────────────────────
-let imgPixels = null, imgW = 0, imgH = 0;
+let imgPixels   = null; // Float32Array of luminance 0-1, [imgW * imgH]
+let imgW = 0, imgH = 0;
 const offscreen = document.createElement('canvas');
 const offCtx    = offscreen.getContext('2d', { willReadFrequently: true });
+
+P.imgmix    = 0;
+P.imginvert = false;
 
 function loadImage(file) {
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
-    imgW = img.naturalWidth; imgH = img.naturalHeight;
-    offscreen.width = imgW; offscreen.height = imgH;
+    imgW = img.naturalWidth;
+    imgH = img.naturalHeight;
+    offscreen.width  = imgW;
+    offscreen.height = imgH;
     offCtx.drawImage(img, 0, 0);
     const data = offCtx.getImageData(0, 0, imgW, imgH).data;
     imgPixels = new Float32Array(imgW * imgH);
     for (let i = 0; i < imgW * imgH; i++) {
-      imgPixels[i] = (0.299*data[i*4] + 0.587*data[i*4+1] + 0.114*data[i*4+2]) / 255;
+      const r = data[i*4]/255, g = data[i*4+1]/255, b = data[i*4+2]/255;
+      imgPixels[i] = 0.299*r + 0.587*g + 0.114*b; // luminance
     }
     URL.revokeObjectURL(url);
     dropZone.textContent = file.name;
@@ -798,19 +799,26 @@ function loadImage(file) {
 }
 
 function sampleImage(normX, normY) {
+  // normX, normY in 0-1, letterboxed
   const imgAspect  = imgW / imgH;
-  const gridAspect = P.canvasW / P.canvasH;
+  const gridAspect = (P.cols * charW) / (P.rows * charH);
   let sx, sy;
   if (imgAspect > gridAspect) {
-    const drawn = gridAspect / imgAspect;
-    const off   = (1 - drawn) / 2;
-    sx = normX; sy = (normY - off) / drawn;
+    // image wider — pillarbox
+    const scale  = imgH / (P.rows * charH);
+    const drawn  = imgW / scale / (P.cols * charW);
+    const offset = (1 - drawn) / 2;
+    sx = (normX - offset) / drawn;
+    sy = normY;
   } else {
-    const drawn = imgAspect / gridAspect;
-    const off   = (1 - drawn) / 2;
-    sx = (normX - off) / drawn; sy = normY;
+    // image taller — letterbox
+    const scale  = imgW / (P.cols * charW);
+    const drawn  = imgH / scale / (P.rows * charH);
+    const offset = (1 - drawn) / 2;
+    sx = normX;
+    sy = (normY - offset) / drawn;
   }
-  if (sx < 0 || sx > 1 || sy < 0 || sy > 1) return 0.5;
+  if (sx < 0 || sx > 1 || sy < 0 || sy > 1) return 0.5; // outside → neutral
   const px = Math.min(Math.floor(sx * imgW), imgW - 1);
   const py = Math.min(Math.floor(sy * imgH), imgH - 1);
   return imgPixels[py * imgW + px];
@@ -818,17 +826,26 @@ function sampleImage(normX, normY) {
 
 const dropZone = document.getElementById('drop-zone');
 const imgFile  = document.getElementById('img-file');
+
 dropZone.addEventListener('click', () => imgFile.click());
 imgFile.addEventListener('change', () => { if (imgFile.files[0]) loadImage(imgFile.files[0]); });
+
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
   if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]);
 });
+
 document.getElementById('btn-clearimg').addEventListener('click', () => {
-  imgPixels = null; dropZone.textContent = 'DROP IMAGE / CLICK'; dropZone.className = '';
+  imgPixels = null;
+  dropZone.textContent = 'DROP IMAGE / CLICK';
+  dropZone.className   = '';
 });
+
+bind('imgmix', 'imgmix', v => v.toFixed(2));
+document.getElementById('imginvert').addEventListener('change', e => { P.imginvert = e.target.checked; });
 
 // ── Typed buffers ─────────────────────────────────────────────
 let _vals  = new Float32Array(0);
@@ -838,40 +855,23 @@ let _crank = new Uint32Array(0);
 
 // ── Render ────────────────────────────────────────────────────
 function render() {
-  const CW = P.canvasW | 0;
-  const CH = P.canvasH | 0;
+  const cols   = P.cols | 0;
+  const rows   = P.rows | 0;
+  const total  = cols * rows;
+  const chars  = P.charset;
+  const N      = chars.length - 1;
 
-  // Build the active tile palette — heavy → light, optional blank at the end
-  const activeTiles = [];
-  for (let i = 0; i < TILE_DRAWS.length; i++) if (P.tiles[i]) activeTiles.push(i);
-  if (P.allowblank) activeTiles.push(-1); // -1 = blank
-  if (activeTiles.length === 0) activeTiles.push(-1); // safety: always render something
-  const N = activeTiles.length - 1;
+  // shape noise
+  const rad  = P.angle  * Math.PI / 180;
+  const dx   = Math.cos(rad), dy = Math.sin(rad);
+  const sc   = 1 / P.scale;
 
-  // Derive grid from size parameter, then spread evenly to fill canvas exactly
-  const cols  = Math.max(1, Math.round(CW / P.cellsize));
-  const rows  = Math.max(1, Math.round(CH / P.cellsize));
-  const cellW = CW / cols;
-  const cellH = CH / rows;
-  const tileSize = Math.max(2, Math.min(cellW, cellH) - P.spacing);
-
-  const total = cols * rows;
-
-  // Update grid info label
-  const gridInfo = document.getElementById('grid-info');
-  if (gridInfo) gridInfo.textContent = `${cols} × ${rows} cells`;
-
-  // Shape noise direction
-  const rad = P.angle * Math.PI / 180;
-  const dx  = Math.cos(rad), dy = Math.sin(rad);
-  const sc  = 1 / P.scale;
-
-  // Color noise direction
+  // color noise
   const crad = P.cangle * Math.PI / 180;
   const cdx  = Math.cos(crad), cdy = Math.sin(crad);
   const csc  = 1 / P.cscale;
 
-  // Resize typed buffers if needed
+  // resize buffers
   if (_vals.length < total) {
     _vals  = new Float32Array(total);
     _cvals = new Float32Array(total);
@@ -879,12 +879,12 @@ function render() {
     _crank = new Uint32Array(total);
   }
 
-  // 1. Compute noise fields
+  // 1. Compute both noise fields
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
 
-      // Shape
+      // shape
       const nx = c * sc + dx * t;
       const ny = r * sc * 0.55 + dy * t;
       let v = fbm(nx, ny, P.octaves | 0, P.lacunarity, P.gain);
@@ -892,16 +892,17 @@ function render() {
       v = Math.max(0, Math.min(1, v * P.brightness));
       if (P.invert) v = 1 - v;
 
-      // Image blend
+      // image blend
       if (imgPixels && P.imgmix > 0) {
         let lum = sampleImage(c / cols, r / rows);
         if (P.imginvert) lum = 1 - lum;
         v = v * (1 - P.imgmix) + lum * P.imgmix;
       }
 
-      _vals[i] = v; _rank[i] = i;
+      _vals[i]  = v;
+      _rank[i]  = i;
 
-      // Color
+      // color — offset seed so it's independent from shape
       const cnx = c * csc + cdx * tc + 50.3;
       const cny = r * csc * 0.55 + cdy * tc + 17.7;
       _cvals[i] = fbm(cnx, cny, P.octaves | 0, P.lacunarity, P.gain);
@@ -909,14 +910,16 @@ function render() {
     }
   }
 
-  // 2. Equalize shape → tileMap (rank → index in activeTiles, dark→light)
+  // 2. Equalize shape → charMap
   const rankSlice = _rank.subarray(0, total);
   rankSlice.sort((a, b) => _vals[a] - _vals[b]);
-  const tileMap = new Uint8Array(total);
-  for (let i = 0; i < total; i++) tileMap[rankSlice[i]] = Math.min(Math.floor(i / total * (N + 1)), N);
+  const charMap = new Uint8Array(total);
+  for (let i = 0; i < total; i++) {
+    charMap[rankSlice[i]] = Math.min(Math.floor(i / total * (N + 1)), N);
+  }
 
-  // 3. Color equalization (optional)
-  let hueMap;
+  // 3. Optionally equalize color → uniform hue distribution
+  let hueMap; // Float32Array of 0-1 values
   if (P.colorequalize) {
     const crankSlice = _crank.subarray(0, total);
     crankSlice.sort((a, b) => _cvals[a] - _cvals[b]);
@@ -926,66 +929,84 @@ function render() {
     hueMap = _cvals.subarray(0, total);
   }
 
-  // 4. Resize canvas — supersample at renderscale for crisp tiles
-  const RS    = P.renderscale | 0;
-  const physW = CW * RS, physH = CH * RS;
-  if (canvas.width !== physW || canvas.height !== physH) {
-    canvas.width  = physW;
-    canvas.height = physH;
+  // 4. Size canvas to fit grid exactly (hi-DPI aware)
+  const dpr = window.devicePixelRatio || 1;
+  const w   = Math.ceil(cols * charW);
+  const h   = Math.ceil(rows * charH);
+  if (canvas.width !== Math.ceil(w * dpr) || canvas.height !== Math.ceil(h * dpr)) {
+    canvas.width        = Math.ceil(w * dpr);
+    canvas.height       = Math.ceil(h * dpr);
+    canvas.style.width  = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.scale(dpr, dpr);
   }
-  ctx.setTransform(RS, 0, 0, RS, 0, 0); // draw in logical CW × CH space
 
-  // 5. Background
   ctx.fillStyle = `hsl(${P.bghue},${P.bgsat}%,${P.bglit}%)`;
-  ctx.fillRect(0, 0, CW, CH);
+  ctx.fillRect(0, 0, w, h);
+  ctx.font = `${P.fontsize | 0}px "${P.fontfamily}", monospace`;
+  ctx.textBaseline = 'top';
 
-  // 6. Draw tiles
-  const bandLo = P.bandlo / 100;
-  const bandHi = P.bandhi / 100;
+  // 5. Draw each character with its own color + cursor glow
+  const bandLo  = P.bandlo / 100;
+  const bandHi  = P.bandhi / 100;
+  const fbStyle = `hsl(${P.fbhue},${P.fbsat}%,${P.fblit}%)`;
+  const glowR2  = P.glowradius * P.glowradius;
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const i       = r * cols + c;
-      const tileIdx = activeTiles[tileMap[i]];
-      if (tileIdx === -1) continue; // blank cell
+      const i  = r * cols + c;
+      const ch = chars[charMap[i]];
+      if (ch === ' ') continue;
 
-      const cx = (c + 0.5) * cellW;
-      const cy = (r + 0.5) * cellH;
+      const cx = c * charW + charW * 0.5;
+      const cy = r * charH + charH * 0.5;
+      const dx2 = cx - mouseX, dy2 = cy - mouseY;
+      const dist2 = dx2 * dx2 + dy2 * dy2;
+      const glow  = dist2 < glowR2
+        ? P.glowstrength * Math.pow(1 - dist2 / glowR2, P.glowfalloff)
+        : 0;
 
-      const hv       = hueMap[i];
+      const hv = hueMap[i]; // 0-1
+      // Color noise drives the hue for this character regardless of band
       const noiseHue = P.basehue + (hv - 0.5) * P.huespread;
       const inBand   = hv >= bandLo && hv <= bandHi;
-      const hue = inBand ? noiseHue     : P.fbhue;
-      const sat = inBand ? P.saturation : P.fbsat;
-      const lit = inBand ? P.lightness  : P.fblit;
 
-      TILE_DRAWS[tileIdx](ctx, cx, cy, tileSize, `hsl(${hue},${sat}%,${lit}%)`);
+      // Base: what the character looks like without cursor
+      const baseHue = inBand ? noiseHue : P.fbhue;
+      const baseSat = inBand ? P.saturation : P.fbsat;
+      const baseLit = inBand ? P.lightness  : P.fblit;
+
+      // Glow lerps toward the noise-driven color — cursor "reveals" the color field
+      const hue = baseHue + glow * (noiseHue - baseHue);
+      const sat = baseSat + glow * (P.saturation - baseSat);
+      const lit = baseLit + glow * (P.lightness  - baseLit);
+
+      ctx.fillStyle = `hsl(${hue},${sat}%,${lit}%)`;
+      ctx.fillText(ch, c * charW, r * charH);
     }
   }
 }
-
-// ── Export ────────────────────────────────────────────────────
-// Canvas IS the output — just download it directly
-document.getElementById('btn-export').addEventListener('click', () => {
-  const RS   = P.renderscale | 0;
-  const a    = document.createElement('a');
-  a.download = `ascii-noise-${P.canvasW * RS}x${P.canvasH * RS}.png`;
-  a.href     = canvas.toDataURL('image/png');
-  a.click();
-});
 
 // ── Loop ─────────────────────────────────────────────────────
 function loop(now) {
   const dt = Math.min((now - lastFrame) / 1000, 0.1);
   lastFrame = now;
-  if (!paused) { t += P.speed * dt; tc += P.cspeed * dt; }
+
+  if (!paused) {
+    t  += P.speed  * dt;
+    tc += P.cspeed * dt;
+  }
+
   render();
+
   frameCount++;
   fpsTimer += dt;
   if (fpsTimer >= 0.5) {
     document.getElementById('fps').textContent = 'fps: ' + Math.round(frameCount / fpsTimer);
-    frameCount = 0; fpsTimer = 0;
+    frameCount = 0;
+    fpsTimer   = 0;
   }
+
   requestAnimationFrame(loop);
 }
 

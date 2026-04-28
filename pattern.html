@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ABC Labs · Pattern Generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #F4F4ED;
+    --panel:    #FFFFFF;
+    --line:      #ECECE6;
+    --line-2:    #E0E0D8;
+    --text:      #141414;
+    --text-mut:  #6B6B66;
+    --text-soft: #9A9A95;
+    --accent:    #2256F5;
+    --accent-soft:#E8EEFF;
+    --radius:    14px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ────────────────────────────────────────────── */
+  #sidebar {
+    width: 320px;
+    min-width: 320px;
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #sidebar header {
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-mut);
+    letter-spacing: 0.2px;
+  }
+
+  #sidebar .scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  #sidebar footer {
+    padding: 18px 24px 22px;
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+  }
+
+  /* ── Control groups ─────────────────────────────────────── */
+  .field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .field-label .val {
+    float: right;
+    font-weight: 500;
+    color: var(--text-mut);
+  }
+
+  /* ── Image picker ───────────────────────────────────────── */
+  .image-picker {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  #thumb {
+    width: 96px;
+    height: 96px;
+    border-radius: var(--radius-sm);
+    background: var(--line);
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    border: 1px dashed var(--line-2);
+    transition: border-color 0.15s, transform 0.15s, border-style 0.15s;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-soft);
+  }
+  #thumb:hover { border-color: var(--accent); color: var(--accent); }
+  #thumb.has-image { border-style: solid; color: transparent; }
+  #thumb.drag-over { border-color: var(--accent); transform: scale(1.02); }
+  #thumb svg { width: 24px; height: 24px; }
+
+  .picker-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .change-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg);
+    color: var(--accent);
+    border: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .change-btn:hover { background: var(--accent-soft); }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--text-soft);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 6px 4px;
+    text-decoration: underline;
+    text-decoration-color: var(--line-2);
+  }
+  .remove-btn:hover { color: var(--text); }
+  .remove-btn[hidden] { display: none; }
+
+  #file-input { display: none; }
+
+  /* ── Group label ─────────────────────────────────────────── */
+  .group-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* ── Slider ─────────────────────────────────────────────── */
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--line-2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    margin: 4px 0;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+  }
+
+  /* ── Select (source picker) ─────────────────────────────── */
+  select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── Color swatches ─────────────────────────────────────── */
+  .swatch-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--line-2);
+    cursor: pointer;
+    padding: 0;
+    background: var(--bg-sw, #fff);
+    transition: transform 0.1s, box-shadow 0.15s;
+    position: relative;
+  }
+  .swatch:hover { transform: scale(1.05); }
+  .swatch.active {
+    box-shadow: 0 0 0 2px var(--accent), 0 0 0 4px var(--panel);
+  }
+  .swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .color-pair {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Toggle switch ──────────────────────────────────────── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .toggle-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .switch {
+    position: relative;
+    width: 38px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch-track {
+    position: absolute;
+    inset: 0;
+    background: var(--line-2);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .switch-track::after {
+    content: '';
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    transition: transform 0.2s;
+  }
+  .switch input:checked + .switch-track { background: var(--accent); }
+  .switch input:checked + .switch-track::after { transform: translateX(16px); }
+
+  /* ── Download button ────────────────────────────────────── */
+  .download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: none;
+    padding: 12px 18px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .download-btn:hover { background: #DCE5FF; }
+
+  /* ── Main pane / canvas ─────────────────────────────────── */
+  #stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  #stage.checkerboard {
+    background-image:
+      linear-gradient(45deg, rgba(20,20,20,0.07) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(20,20,20,0.07) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, rgba(20,20,20,0.07) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(20,20,20,0.07) 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  }
+  #canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 4px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+
+  /* ── Misc ──────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <header>ABC Labs Pattern Generator</header>
+
+  <div class="scroll">
+
+    <!-- Source -->
+    <div class="group">
+      <div class="group-label">Source</div>
+      <div>
+        <label class="field-label" for="source">Pattern source</label>
+        <select id="source">
+          <option value="noise">Noise</option>
+          <option value="image">Image</option>
+          <option value="video">Video</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Pattern (grid) -->
+    <div class="group">
+      <div class="group-label">Pattern</div>
+
+      <div>
+        <label class="field-label" for="scale">Scale<span class="val" id="v-scale"></span></label>
+        <input type="range" id="scale" min="0" max="100" value="50" step="1">
+      </div>
+
+      <div>
+        <label class="field-label" for="symbols">Number of symbols<span class="val" id="v-symbols">5</span></label>
+        <input type="range" id="symbols" min="1" max="5" value="5" step="1">
+      </div>
+    </div>
+
+    <!-- Noise -->
+    <div class="group">
+      <div class="group-label">Noise</div>
+
+      <div>
+        <label class="field-label" for="gridsize">Grid size<span class="val" id="v-gridsize"></span></label>
+        <input type="range" id="gridsize" min="0" max="100" value="40" step="1">
+      </div>
+    </div>
+
+    <!-- Image (optional) -->
+    <div class="group" id="image-group" hidden>
+      <div class="group-label">Image</div>
+
+      <div class="image-picker">
+        <div id="thumb" role="button" tabindex="0" aria-label="Upload image">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="picker-actions">
+          <button class="change-btn" id="change-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span id="change-btn-label">Change image</span>
+          </button>
+          <button class="remove-btn" id="remove-btn" hidden>Remove</button>
+        </div>
+        <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp">
+      </div>
+    </div>
+
+    <!-- Video -->
+    <div class="group" id="video-group" hidden>
+      <div class="group-label">Video</div>
+
+      <div class="image-picker">
+        <div id="video-thumb" role="button" tabindex="0" aria-label="Upload video">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="picker-actions">
+          <button class="change-btn" id="video-change-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span id="video-change-btn-label">Change video</span>
+          </button>
+          <button class="remove-btn" id="video-remove-btn" hidden>Remove</button>
+        </div>
+        <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/quicktime">
+      </div>
+
+      <div>
+        <label class="field-label" for="video-time">Frame<span class="val" id="v-video-time">0.0s</span></label>
+        <input type="range" id="video-time" min="0" max="1" value="0" step="0.01" disabled>
+      </div>
+    </div>
+
+    <!-- Colors -->
+    <div class="group">
+      <div class="group-label">Colors</div>
+
+      <div class="color-pair">
+        <div>
+          <span class="field-label">Color 1</span>
+          <div class="swatch-row" id="swatches-fg" role="radiogroup" aria-label="Foreground color"></div>
+        </div>
+        <div>
+          <span class="field-label">Color 2</span>
+          <div class="swatch-row" id="swatches-bg" role="radiogroup" aria-label="Background color"></div>
+        </div>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Transparent background</span>
+        <label class="switch">
+          <input type="checkbox" id="transparent">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Invert</span>
+        <label class="switch">
+          <input type="checkbox" id="invert">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <button class="download-btn" id="download">
+      Download pattern
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    </button>
+  </footer>
+</aside>
+
+<main id="stage">
+  <canvas id="canvas"></canvas>
+</main>
+
+<script>
+// ── Palette ───────────────────────────────────────────────────
+const PALETTE = [
+  { name: 'Graphite',  hex: '#141414' },
+  { name: 'Bone',      hex: '#F4F4ED' },
+  { name: 'Pistachio', hex: '#E9ECCD' },
+  { name: 'Sky',       hex: '#C6EBFE' },
+  { name: 'Lime',      hex: '#C7C86E' },
+  { name: 'Ice',       hex: '#6AC6F5' },
+  { name: 'Olive',     hex: '#9E9763' },
+  { name: 'Moss',      hex: '#3E360E' },
+  { name: 'Earth',     hex: '#452412' },
+  { name: 'Clay',      hex: '#9D7B51' },
+];
+
+// ── Noise (value noise + fbm) ─────────────────────────────────
+function hash(x, y) {
+  const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+  return n - Math.floor(n);
+}
+const smoothstep = t => t * t * (3 - 2 * t);
+function valueNoise(x, y) {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  const fx = x - ix, fy = y - iy;
+  const ux = smoothstep(fx), uy = smoothstep(fy);
+  const a = hash(ix,   iy),   b = hash(ix+1, iy);
+  const c = hash(ix,   iy+1), d = hash(ix+1, iy+1);
+  return a + (b-a)*ux + (c-a)*uy + (a-b-c+d)*ux*uy;
+}
+function fbm(x, y, octaves, lacunarity, gain) {
+  let v = 0, amp = 1, freq = 1, max = 0;
+  for (let i = 0; i < octaves; i++) {
+    v += valueNoise(x * freq, y * freq) * amp;
+    max += amp; amp *= gain; freq *= lacunarity;
+  }
+  return v / max;
+}
+
+// ── Tile system (parametric morph) ────────────────────────────
+const TILE_PARAMS = [
+  { outerR: 59.85, outerInnerR:  0,    midR:  0,    midInnerR:  0    }, // 0 disk
+  { outerR: 59.87, outerInnerR: 51.87, midR: 14.97, midInnerR:  0    }, // 1 ring + dot
+  { outerR: 59.87, outerInnerR: 51.87, midR: 34.93, midInnerR: 26.93 }, // 2 two rings
+  { outerR: 59.87, outerInnerR: 51.87, midR:  0,    midInnerR:  0    }, // 3 ring
+  { outerR: 16,    outerInnerR:  0,    midR:  0,    midInnerR:  0    }, // 4 small dot
+];
+const BLANK_PARAMS = { outerR: 0, outerInnerR: 0, midR: 0, midInnerR: 0 };
+const lerp = (a, b, t) => a + (b - a) * t;
+function lerpTileParams(A, B, t) {
+  return {
+    outerR:      lerp(A.outerR,      B.outerR,      t),
+    outerInnerR: lerp(A.outerInnerR, B.outerInnerR, t),
+    midR:        lerp(A.midR,        B.midR,        t),
+    midInnerR:   lerp(A.midInnerR,   B.midInnerR,   t),
+  };
+}
+function drawAnnulus(ctx, cx, cy, R, innerR, color) {
+  if (R <= 0.1) return;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  if (innerR > 0.1 && innerR < R) ctx.arc(cx, cy, innerR, 0, Math.PI * 2, true);
+  ctx.fill('evenodd');
+}
+function drawMorphedTile(ctx, cx, cy, size, params, color) {
+  const s = size / 120;
+  drawAnnulus(ctx, cx, cy, params.outerR * s, params.outerInnerR * s, color);
+  drawAnnulus(ctx, cx, cy, params.midR   * s, params.midInnerR   * s, color);
+}
+
+// ── Hardcoded internals ───────────────────────────────────────
+const LACUNARITY      = 2.0;
+const RENDERSCALE     = 2;
+const EXPORT_LONG_EDGE = 2048;
+const SPACING_RATIO   = 0.15;
+const DEFAULT_ASPECT  = 16 / 9;  // canvas aspect when no image is loaded
+const OCTAVES         = 4;
+const GAIN            = 0.5;
+
+// ── State ─────────────────────────────────────────────────────
+const state = {
+  source:         'noise',       // 'noise' | 'image' | 'video'
+  scale01:        0.50,         // 0..1 → cellsize
+  symbols:        5,            // 1..5
+  gridsize01:     0.40,         // 0..1 → noise feature size
+  fgIdx:          8,            // Earth
+  bgIdx:          3,            // Sky
+  invert:         false,
+  transparent:    false,
+  imgPixels:      null,         // Float32Array luminance, null = pure noise
+  imgW:           0,
+  imgH:           0,
+};
+
+// ── Image input ───────────────────────────────────────────────
+const offscreen = document.createElement('canvas');
+const offCtx    = offscreen.getContext('2d', { willReadFrequently: true });
+let currentObjectURL = null;
+let currentVideoObjectURL = null;
+
+const videoEl = document.createElement('video');
+videoEl.muted = true;
+videoEl.playsInline = true;
+videoEl.preload = 'metadata';
+videoEl.style.display = 'none';
+document.body.appendChild(videoEl);
+
+function setImageFromBitmapLike(source, naturalW, naturalH) {
+  state.imgW = naturalW;
+  state.imgH = naturalH;
+  offscreen.width  = naturalW;
+  offscreen.height = naturalH;
+  offCtx.drawImage(source, 0, 0);
+  const data = offCtx.getImageData(0, 0, naturalW, naturalH).data;
+  state.imgPixels = new Float32Array(naturalW * naturalH);
+  for (let i = 0; i < naturalW * naturalH; i++) {
+    state.imgPixels[i] = (0.299*data[i*4] + 0.587*data[i*4+1] + 0.114*data[i*4+2]) / 255;
+  }
+}
+
+function loadImageFile(file) {
+  if (currentObjectURL) URL.revokeObjectURL(currentObjectURL);
+  currentObjectURL = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    setImageFromBitmapLike(img, img.naturalWidth, img.naturalHeight);
+    thumbEl.style.backgroundImage = `url(${currentObjectURL})`;
+    thumbEl.classList.add('has-image');
+    document.getElementById('change-btn-label').textContent = 'Change image';
+    document.getElementById('remove-btn').hidden = false;
+    scheduleRender();
+  };
+  img.src = currentObjectURL;
+}
+
+function removeImage() {
+  if (currentObjectURL) { URL.revokeObjectURL(currentObjectURL); currentObjectURL = null; }
+  state.imgPixels = null;
+  state.imgW = 0;
+  state.imgH = 0;
+  thumbEl.style.backgroundImage = '';
+  thumbEl.classList.remove('has-image');
+  document.getElementById('change-btn-label').textContent = 'Change image';
+  document.getElementById('remove-btn').hidden = true;
+  document.getElementById('file-input').value = '';
+  scheduleRender();
+}
+
+function removeVideo() {
+  if (currentVideoObjectURL) { URL.revokeObjectURL(currentVideoObjectURL); currentVideoObjectURL = null; }
+  videoEl.pause();
+  videoEl.removeAttribute('src');
+  videoEl.load();
+  state.imgPixels = null;
+  state.imgW = 0;
+  state.imgH = 0;
+
+  const vThumb = document.getElementById('video-thumb');
+  vThumb.style.backgroundImage = '';
+  vThumb.classList.remove('has-image');
+  document.getElementById('video-remove-btn').hidden = true;
+  document.getElementById('video-file-input').value = '';
+
+  const tEl = document.getElementById('video-time');
+  tEl.value = '0';
+  tEl.disabled = true;
+  document.getElementById('v-video-time').textContent = '0.0s';
+  scheduleRender();
+}
+
+async function captureVideoFrame() {
+  if (!videoEl.videoWidth || !videoEl.videoHeight) return;
+  setImageFromBitmapLike(videoEl, videoEl.videoWidth, videoEl.videoHeight);
+
+  const vThumb = document.getElementById('video-thumb');
+  try {
+    const thumbC = document.createElement('canvas');
+    const tw = 160;
+    const th = Math.max(1, Math.round(tw * (videoEl.videoHeight / videoEl.videoWidth)));
+    thumbC.width = tw;
+    thumbC.height = th;
+    const tctx = thumbC.getContext('2d');
+    tctx.drawImage(videoEl, 0, 0, tw, th);
+    vThumb.style.backgroundImage = `url(${thumbC.toDataURL('image/png')})`;
+    vThumb.classList.add('has-image');
+  } catch {
+    // ignore thumb snapshot failures; render will still work
+  }
+}
+
+function loadVideoFile(file) {
+  if (currentVideoObjectURL) URL.revokeObjectURL(currentVideoObjectURL);
+  currentVideoObjectURL = URL.createObjectURL(file);
+  videoEl.src = currentVideoObjectURL;
+  videoEl.currentTime = 0;
+
+  document.getElementById('video-remove-btn').hidden = false;
+
+  const tEl = document.getElementById('video-time');
+  tEl.disabled = true;
+  tEl.max = '1';
+  tEl.value = '0';
+  document.getElementById('v-video-time').textContent = '0.0s';
+
+  videoEl.addEventListener('loadedmetadata', () => {
+    const dur = Number.isFinite(videoEl.duration) && videoEl.duration > 0 ? videoEl.duration : 1;
+    tEl.max = String(dur);
+    tEl.step = String(Math.max(0.01, dur / 500));
+    tEl.disabled = false;
+  }, { once: true });
+
+  videoEl.addEventListener('loadeddata', async () => {
+    await captureVideoFrame();
+    scheduleRender();
+  }, { once: true });
+
+  videoEl.addEventListener('seeked', () => {
+    captureVideoFrame();
+    scheduleRender();
+  });
+
+  videoEl.load();
+}
+
+function sampleImage(normX, normY) {
+  if (!state.imgPixels) return 0.5;
+  const imgAspect  = state.imgW / state.imgH;
+  const canvasAspect = canvas.width / canvas.height;
+  let sx, sy;
+  if (imgAspect > canvasAspect) {
+    const drawn = canvasAspect / imgAspect;
+    const off   = (1 - drawn) / 2;
+    sx = normX; sy = (normY - off) / drawn;
+  } else {
+    const drawn = imgAspect / canvasAspect;
+    const off   = (1 - drawn) / 2;
+    sx = (normX - off) / drawn; sy = normY;
+  }
+  if (sx < 0 || sx > 1 || sy < 0 || sy > 1) return 0.5;
+  const px = Math.min(Math.floor(sx * state.imgW), state.imgW - 1);
+  const py = Math.min(Math.floor(sy * state.imgH), state.imgH - 1);
+  return state.imgPixels[py * state.imgW + px];
+}
+
+// ── Canvas + render ───────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+let _vals = new Float32Array(0);
+let _rank = new Uint32Array(0);
+let renderScheduled = false;
+
+function scheduleRender() {
+  if (renderScheduled) return;
+  renderScheduled = true;
+  requestAnimationFrame(() => { renderScheduled = false; render(); });
+}
+
+function computeCanvasSize() {
+  // Canvas aspect: matches input image when present, otherwise a sensible default
+  const aspect = state.imgW && state.imgH ? state.imgW / state.imgH : DEFAULT_ASPECT;
+  let CW, CH;
+  if (aspect >= 1) { CW = EXPORT_LONG_EDGE; CH = Math.round(EXPORT_LONG_EDGE / aspect); }
+  else             { CH = EXPORT_LONG_EDGE; CW = Math.round(EXPORT_LONG_EDGE * aspect); }
+  return { CW, CH };
+}
+
+function render() {
+  const { CW, CH } = computeCanvasSize();
+
+  // Map UI controls → internal params
+  const cellsize  = Math.round(lerp(80, 8, state.scale01));      // bigger slider = denser
+  const noiseScl  = lerp(1, 12, state.gridsize01);               // bigger = larger noise features
+  const octaves   = OCTAVES;
+  const gain      = GAIN;
+  const fgColor   = PALETTE[state.fgIdx].hex;
+  const bgColor   = PALETTE[state.bgIdx].hex;
+  const hasImage  = state.source !== 'noise' && !!state.imgPixels;
+
+  const effectiveFg = state.invert ? bgColor : fgColor;
+  const effectiveBg = state.invert ? fgColor : bgColor;
+
+  // Build active keyframes (heaviest first; blank pseudo-tile at lightest end)
+  const activeTiles = TILE_PARAMS.slice(0, state.symbols);
+  activeTiles.push(BLANK_PARAMS);
+  const N = activeTiles.length - 1;
+
+  // Grid (cells fill canvas evenly)
+  const cols   = Math.max(1, Math.round(CW / cellsize));
+  const rows   = Math.max(1, Math.round(CH / cellsize));
+  const cellW  = CW / cols;
+  const cellH  = CH / rows;
+  const tileSize = Math.max(2, Math.min(cellW, cellH) - cellsize * SPACING_RATIO);
+  const total  = cols * rows;
+
+  if (_vals.length < total) {
+    _vals = new Float32Array(total);
+    _rank = new Uint32Array(total);
+  }
+
+  const sc = 1 / noiseScl;
+
+  // 1. Compute per-cell brightness — noise is the base; image (if present) shapes it
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const i = r * cols + c;
+      const noise = fbm(c * sc, r * sc * 0.55, octaves, LACUNARITY, gain);
+      let v;
+      if (hasImage) {
+        const lum = sampleImage(c / cols, r / rows);
+        v = lum * 0.85 + noise * 0.15;
+      } else {
+        v = noise;
+      }
+      _vals[i] = v;
+      _rank[i] = i;
+    }
+  }
+
+  // 2. Histogram-equalize to a continuous index in [0, N]
+  _rank.subarray(0, total).sort((a, b) => _vals[a] - _vals[b]);
+  const denom = total > 1 ? total - 1 : 1;
+  const tileMap = new Float32Array(total);
+  for (let i = 0; i < total; i++) tileMap[_rank[i]] = (i / denom) * N;
+
+  // 3. Resize canvas (supersampled) and paint background
+  const physW = CW * RENDERSCALE, physH = CH * RENDERSCALE;
+  if (canvas.width !== physW || canvas.height !== physH) {
+    canvas.width  = physW;
+    canvas.height = physH;
+  }
+  ctx.setTransform(RENDERSCALE, 0, 0, RENDERSCALE, 0, 0);
+  if (state.transparent) {
+    ctx.clearRect(0, 0, CW, CH);
+  } else {
+    ctx.fillStyle = effectiveBg;
+    ctx.fillRect(0, 0, CW, CH);
+  }
+
+  // 4. Draw morphed tiles
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const i = r * cols + c;
+      const f    = tileMap[i];
+      const lo   = Math.min(Math.floor(f), N);
+      const hi   = Math.min(lo + 1, N);
+      const frac = f - lo;
+      const params = (lo === hi) ? activeTiles[lo] : lerpTileParams(activeTiles[lo], activeTiles[hi], frac);
+      if (params.outerR <= 0.1 && params.midR <= 0.1) continue;
+      drawMorphedTile(ctx, (c + 0.5) * cellW, (r + 0.5) * cellH, tileSize, params, effectiveFg);
+    }
+  }
+}
+
+// ── UI wiring ─────────────────────────────────────────────────
+function bindSlider(id, onUpdate, fmt) {
+  const el  = document.getElementById(id);
+  const vEl = document.getElementById('v-' + id);
+  function apply() {
+    const raw = parseFloat(el.value);
+    onUpdate(raw);
+    if (vEl) vEl.textContent = fmt(raw);
+    scheduleRender();
+  }
+  el.addEventListener('input', apply);
+  apply(); // initialise label + state on load
+}
+bindSlider('scale',         v => { state.scale01         = v / 100; }, v => `${v|0}`);
+bindSlider('symbols',       v => { state.symbols         = v|0;     }, v => `${v|0}`);
+bindSlider('gridsize',      v => { state.gridsize01      = v / 100; }, v => `${v|0}`);
+
+// Color swatches
+function buildSwatches(containerId, currentKey) {
+  const c = document.getElementById(containerId);
+  PALETTE.forEach((color, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'swatch';
+    btn.style.background = color.hex;
+    btn.title = `${color.name} ${color.hex}`;
+    btn.setAttribute('aria-label', `Pick color: ${color.name}`);
+    btn.setAttribute('role', 'radio');
+    if (state[currentKey] === idx) btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      state[currentKey] = idx;
+      c.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      btn.setAttribute('aria-checked', 'true');
+      scheduleRender();
+    });
+    c.appendChild(btn);
+  });
+}
+buildSwatches('swatches-fg', 'fgIdx');
+buildSwatches('swatches-bg', 'bgIdx');
+
+// Transparent background toggle
+const stageEl = document.getElementById('stage');
+document.getElementById('transparent').addEventListener('change', e => {
+  state.transparent = e.target.checked;
+  stageEl.classList.toggle('checkerboard', state.transparent);
+  scheduleRender();
+});
+
+// Invert toggle (swap fg/bg)
+document.getElementById('invert').addEventListener('change', e => {
+  state.invert = e.target.checked;
+  scheduleRender();
+});
+
+// Source picker
+const sourceEl = document.getElementById('source');
+const imageGroupEl = document.getElementById('image-group');
+const videoGroupEl = document.getElementById('video-group');
+function applySourceUI() {
+  imageGroupEl.hidden = state.source !== 'image';
+  videoGroupEl.hidden = state.source !== 'video';
+}
+sourceEl.addEventListener('change', () => {
+  state.source = sourceEl.value;
+  if (state.source === 'noise') {
+    removeImage();
+    removeVideo();
+  }
+  applySourceUI();
+  scheduleRender();
+});
+applySourceUI();
+
+// Image picker
+const thumbEl = document.getElementById('thumb');
+const fileEl  = document.getElementById('file-input');
+thumbEl.addEventListener('click', () => fileEl.click());
+document.getElementById('change-btn').addEventListener('click', () => fileEl.click());
+thumbEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileEl.click(); } });
+fileEl.addEventListener('change', () => { if (fileEl.files[0]) loadImageFile(fileEl.files[0]); });
+document.getElementById('remove-btn').addEventListener('click', removeImage);
+
+// Drag & drop on the thumb
+['dragenter', 'dragover'].forEach(evt => {
+  thumbEl.addEventListener(evt, e => { e.preventDefault(); thumbEl.classList.add('drag-over'); });
+});
+['dragleave', 'drop'].forEach(evt => {
+  thumbEl.addEventListener(evt, e => { e.preventDefault(); thumbEl.classList.remove('drag-over'); });
+});
+thumbEl.addEventListener('drop', e => {
+  if (e.dataTransfer.files[0]) loadImageFile(e.dataTransfer.files[0]);
+});
+
+// Video picker + scrub
+const videoThumbEl = document.getElementById('video-thumb');
+const videoFileEl  = document.getElementById('video-file-input');
+const videoTimeEl  = document.getElementById('video-time');
+videoThumbEl.addEventListener('click', () => videoFileEl.click());
+document.getElementById('video-change-btn').addEventListener('click', () => videoFileEl.click());
+videoThumbEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); videoFileEl.click(); } });
+videoFileEl.addEventListener('change', () => { if (videoFileEl.files[0]) loadVideoFile(videoFileEl.files[0]); });
+document.getElementById('video-remove-btn').addEventListener('click', removeVideo);
+
+videoTimeEl.addEventListener('input', () => {
+  const t = parseFloat(videoTimeEl.value) || 0;
+  document.getElementById('v-video-time').textContent = `${t.toFixed(1)}s`;
+});
+videoTimeEl.addEventListener('change', () => {
+  const t = parseFloat(videoTimeEl.value) || 0;
+  document.getElementById('v-video-time').textContent = `${t.toFixed(1)}s`;
+  if (!videoTimeEl.disabled) videoEl.currentTime = t;
+});
+
+// Download
+document.getElementById('download').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.download = `pattern-${canvas.width}x${canvas.height}.png`;
+  a.href     = canvas.toDataURL('image/png');
+  a.click();
+});
+
+// ── Boot ──────────────────────────────────────────────────────
+stageEl.classList.toggle('checkerboard', state.transparent);
+scheduleRender();
+window.addEventListener('resize', scheduleRender);
+</script>
+</body>
+</html>

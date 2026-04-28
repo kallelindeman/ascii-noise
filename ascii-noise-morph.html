@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ASCII Noise</title>
+<title>ASCII Noise — Morph</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -271,7 +271,7 @@
 <body>
 
 <div id="controls">
-  <h1>ASCII Noise</h1>
+  <h1>ASCII Noise · Morph</h1>
 
   <!-- ① CANVAS SIZE — master, everything derives from this -->
   <div class="group">
@@ -519,63 +519,61 @@ function fbm(x, y, octaves, lacunarity, gain) {
   return v / max;
 }
 
-// ── Tile system ──────────────────────────────────────────────
-// 6 tile shapes ported from the SVG assets, ordered by ink density
-// (heaviest first → lightest last). Indices 0..5. Index 6 = blank.
-// Drawing functions take (ctx, cx, cy, size, color)
-const TILE_DRAWS = [
-  // 0: full disk (heaviest)  — assets/3.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(cx, cy, s * 0.499, 0, Math.PI*2); ctx.fill();
-  },
-  // 1: ring + filled dot     — assets/4.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.fillStyle = color; ctx.strokeStyle = color;
-    ctx.lineWidth = s * (8/120);
-    ctx.beginPath(); ctx.arc(cx, cy, s * (55.87/120), 0, Math.PI*2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, s * (14.97/120), 0, Math.PI*2); ctx.fill();
-  },
-  // 2: ring + 3 vertical lines — assets/6.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = s * (8/120);
-    ctx.beginPath(); ctx.arc(cx, cy, s * (55.87/120), 0, Math.PI*2); ctx.stroke();
-    // 3 vertical chords
-    const xs = [29.93, 59.86, 89.79];
-    const ys = [[14.39, 104.18], [4.41, 114.16], [14.39, 104.18]];
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(cx - s/2 + s * xs[i] / 120, cy - s/2 + s * ys[i][0] / 120);
-      ctx.lineTo(cx - s/2 + s * xs[i] / 120, cy - s/2 + s * ys[i][1] / 120);
-      ctx.stroke();
-    }
-  },
-  // 3: two concentric rings   — assets/5.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = s * (8/120);
-    ctx.beginPath(); ctx.arc(cx, cy, s * (55.87/120), 0, Math.PI*2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, s * (30.93/120), 0, Math.PI*2); ctx.stroke();
-  },
-  // 4: single ring            — assets/2.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = s * (8/120);
-    ctx.beginPath(); ctx.arc(cx, cy, s * (55.87/120), 0, Math.PI*2); ctx.stroke();
-  },
-  // 5: small filled dot       — assets/1.svg
-  (ctx, cx, cy, s, color) => {
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(cx, cy, s * (16/120), 0, Math.PI*2); ctx.fill();
-  },
+// ── Tile system (parametric) ─────────────────────────────────
+// 5 keyframe tiles described as 4 numeric parameters each.
+// All shapes are annuli (ring with optional inner hole). A "filled disk"
+// is just an annulus with innerR=0 — so morphing radius and innerR
+// continuously transitions disk ↔ ring. Values normalized to 120 viewBox.
+//
+// Order: heavy → light (indices 0..4). The "blank" pseudo-tile at the
+// lightest end is a synthetic keyframe with all radii zero.
+const TILE_PARAMS = [
+  // 0: full disk
+  { outerR: 59.85, outerInnerR:  0,    midR:  0,    midInnerR:  0    },
+  // 1: ring + filled dot
+  { outerR: 59.87, outerInnerR: 51.87, midR: 14.97, midInnerR:  0    },
+  // 2: two concentric rings
+  { outerR: 59.87, outerInnerR: 51.87, midR: 34.93, midInnerR: 26.93 },
+  // 3: single ring
+  { outerR: 59.87, outerInnerR: 51.87, midR:  0,    midInnerR:  0    },
+  // 4: small filled dot
+  { outerR: 16,    outerInnerR:  0,    midR:  0,    midInnerR:  0    },
 ];
 
-// SVG markup for the UI preview buttons (one per tile, same density order)
+const BLANK_PARAMS = { outerR: 0, outerInnerR: 0, midR: 0, midInnerR: 0 };
+
+const lerp = (a, b, t) => a + (b - a) * t;
+
+function lerpTileParams(A, B, t) {
+  return {
+    outerR:      lerp(A.outerR,      B.outerR,      t),
+    outerInnerR: lerp(A.outerInnerR, B.outerInnerR, t),
+    midR:        lerp(A.midR,        B.midR,        t),
+    midInnerR:   lerp(A.midInnerR,   B.midInnerR,   t),
+  };
+}
+
+function drawAnnulus(ctx, cx, cy, R, innerR, color) {
+  if (R <= 0.1) return;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  if (innerR > 0.1 && innerR < R) {
+    ctx.arc(cx, cy, innerR, 0, Math.PI * 2, true); // ccw → hole
+  }
+  ctx.fill('evenodd');
+}
+
+function drawMorphedTile(ctx, cx, cy, size, params, color) {
+  const s = size / 120;
+  drawAnnulus(ctx, cx, cy, params.outerR * s, params.outerInnerR * s, color);
+  drawAnnulus(ctx, cx, cy, params.midR   * s, params.midInnerR   * s, color);
+}
+
+// SVG markup for the UI preview buttons — same density order
 const TILE_PREVIEWS = [
   '<svg viewBox="0 0 120 120"><circle class="solid" cx="60" cy="60" r="59"/></svg>',
   '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="55.87" stroke-width="8"/><circle class="solid" cx="60" cy="60" r="14.97"/></svg>',
-  '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="55.87" stroke-width="8"/><path d="M29.93 14.39 V104.18" stroke-width="8"/><path d="M59.86 4.41 V114.16" stroke-width="8"/><path d="M89.79 14.39 V104.18" stroke-width="8"/></svg>',
   '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="55.87" stroke-width="8"/><circle cx="60" cy="60" r="30.93" stroke-width="8"/></svg>',
   '<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="55.87" stroke-width="8"/></svg>',
   '<svg viewBox="0 0 120 120"><circle class="solid" cx="60" cy="60" r="16"/></svg>',
@@ -588,8 +586,8 @@ const P = {
   renderscale: 2,
   // grid — derived from these two
   cellsize: 24, spacing: 4,
-  // tiles — boolean per tile, all on by default
-  tiles: [true, true, true, true, true, true],
+  // tiles — boolean per keyframe, all on by default
+  tiles: [true, true, true, true, true],
   allowblank: true,
   // shape noise
   scale: 3, octaves: 4, lacunarity: 2.0, gain: 0.5,
@@ -841,11 +839,12 @@ function render() {
   const CW = P.canvasW | 0;
   const CH = P.canvasH | 0;
 
-  // Build the active tile palette — heavy → light, optional blank at the end
+  // Build the active keyframe palette — heavy → light, optional blank at the end
+  // Each entry is a tile params object (or BLANK_PARAMS for the blank end stop).
   const activeTiles = [];
-  for (let i = 0; i < TILE_DRAWS.length; i++) if (P.tiles[i]) activeTiles.push(i);
-  if (P.allowblank) activeTiles.push(-1); // -1 = blank
-  if (activeTiles.length === 0) activeTiles.push(-1); // safety: always render something
+  for (let i = 0; i < TILE_PARAMS.length; i++) if (P.tiles[i]) activeTiles.push(TILE_PARAMS[i]);
+  if (P.allowblank) activeTiles.push(BLANK_PARAMS);
+  if (activeTiles.length === 0) activeTiles.push(BLANK_PARAMS); // safety
   const N = activeTiles.length - 1;
 
   // Derive grid from size parameter, then spread evenly to fill canvas exactly
@@ -909,11 +908,13 @@ function render() {
     }
   }
 
-  // 2. Equalize shape → tileMap (rank → index in activeTiles, dark→light)
+  // 2. Equalize shape → continuous tileMap (rank → float index in [0, N])
+  // Float index lets us morph between adjacent keyframes per cell.
   const rankSlice = _rank.subarray(0, total);
   rankSlice.sort((a, b) => _vals[a] - _vals[b]);
-  const tileMap = new Uint8Array(total);
-  for (let i = 0; i < total; i++) tileMap[rankSlice[i]] = Math.min(Math.floor(i / total * (N + 1)), N);
+  const tileMap = new Float32Array(total);
+  const denom   = total > 1 ? total - 1 : 1;
+  for (let i = 0; i < total; i++) tileMap[rankSlice[i]] = (i / denom) * N;
 
   // 3. Color equalization (optional)
   let hueMap;
@@ -939,15 +940,25 @@ function render() {
   ctx.fillStyle = `hsl(${P.bghue},${P.bgsat}%,${P.bglit}%)`;
   ctx.fillRect(0, 0, CW, CH);
 
-  // 6. Draw tiles
+  // 6. Draw morphed tiles
   const bandLo = P.bandlo / 100;
   const bandHi = P.bandhi / 100;
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const i       = r * cols + c;
-      const tileIdx = activeTiles[tileMap[i]];
-      if (tileIdx === -1) continue; // blank cell
+      const i = r * cols + c;
+
+      // Continuous tile index → adjacent keyframes + morph fraction
+      const f    = tileMap[i];
+      const lo   = Math.min(Math.floor(f), N);
+      const hi   = Math.min(lo + 1, N);
+      const frac = f - lo;
+      const params = (lo === hi)
+        ? activeTiles[lo]
+        : lerpTileParams(activeTiles[lo], activeTiles[hi], frac);
+
+      // Skip if morphed shape is essentially nothing
+      if (params.outerR <= 0.1 && params.midR <= 0.1) continue;
 
       const cx = (c + 0.5) * cellW;
       const cy = (r + 0.5) * cellH;
@@ -959,7 +970,7 @@ function render() {
       const sat = inBand ? P.saturation : P.fbsat;
       const lit = inBand ? P.lightness  : P.fblit;
 
-      TILE_DRAWS[tileIdx](ctx, cx, cy, tileSize, `hsl(${hue},${sat}%,${lit}%)`);
+      drawMorphedTile(ctx, cx, cy, tileSize, params, `hsl(${hue},${sat}%,${lit}%)`);
     }
   }
 }

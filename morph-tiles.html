@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tile Morph — Parametric Interpolation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px;
+    gap: 24px;
+  }
+
+  h1 {
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #888;
+    text-transform: uppercase;
+  }
+
+  #stage {
+    width: 600px;
+    height: 600px;
+    background: #060606;
+    border: 1px solid #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #canvas { display: block; image-rendering: auto; }
+
+  .controls {
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #999;
+  }
+  .label-row span { color: #5af; }
+
+  input[type=range] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    background: #2a2a2a;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #5af;
+    cursor: pointer;
+  }
+
+  .keyframes {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  .kf {
+    aspect-ratio: 1;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 2px;
+    padding: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .kf:hover { border-color: #5af; }
+  .kf.active { border-color: #5af; background: #0d2030; }
+  .kf canvas { width: 100%; height: 100%; display: block; }
+  .kf-label {
+    position: absolute;
+    bottom: 2px; right: 4px;
+    font-size: 9px;
+    color: #555;
+    letter-spacing: 1px;
+  }
+  .kf.active .kf-label { color: #5af; }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  button {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    color: #999;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  button:hover { border-color: #5af; color: #5af; }
+  button.active { border-color: #5af; color: #5af; background: #0d2030; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: #999;
+  }
+
+  .info {
+    font-size: 10px;
+    color: #444;
+    line-height: 1.6;
+    width: 600px;
+    text-align: center;
+  }
+
+  .params {
+    font-size: 10px;
+    color: #666;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    background: #111;
+    border: 1px solid #1a1a1a;
+    padding: 8px;
+    border-radius: 2px;
+    width: 600px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Tile Morph · Parametric Interpolation</h1>
+
+<div id="stage">
+  <canvas id="canvas" width="1200" height="1200" style="width:560px;height:560px"></canvas>
+</div>
+
+<div class="controls">
+  <div>
+    <div class="label-row">
+      <span style="color:#999">Morph position</span>
+      <span id="v-t">0.00</span>
+    </div>
+    <input type="range" id="t" min="0" max="4" value="0" step="0.001">
+  </div>
+
+  <div class="keyframes" id="keyframes"></div>
+
+  <div class="actions">
+    <button id="btn-play">▶ AUTO-PLAY</button>
+    <div class="toggle-row">
+      <span style="color:#666">Speed</span>
+      <input type="range" id="speed" min="0.1" max="3" value="0.6" step="0.01" style="width:120px">
+      <span id="v-speed" style="color:#5af; min-width:32px">0.60</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <div class="toggle-row">
+      <span style="color:#666">Easing</span>
+      <button class="ease-btn active" data-ease="linear">linear</button>
+      <button class="ease-btn"        data-ease="ease">smooth</button>
+      <button class="ease-btn"        data-ease="cubic">cubic</button>
+    </div>
+  </div>
+</div>
+
+<div class="params" id="params">…</div>
+
+<div class="info">
+  Each tile is described by 4 parameters: <code>outerR · outerInnerR · midR · midInnerR</code>.<br>
+  Morphing is a linear interpolation of those values between adjacent keyframes.<br>
+  All shapes use the even-odd annulus trick — a disk is just an annulus with innerR = 0.
+</div>
+
+<script>
+// ── Tile keyframes ────────────────────────────────────────────
+// All values normalized to a 120-unit viewBox.
+// Order: heavy → light (matches the main tool's density order).
+//
+// Each tile is composed of:
+//   outer annulus (outerR, outerInnerR)   — outer ring or disk
+//   middle annulus (midR, midInnerR)      — inner ring or dot
+//   linesA                                 — 0..1 visibility of 3 vertical chords
+//
+// Annulus = disk with hole (even-odd fill). innerR=0 means filled disk.
+
+const TILES = [
+  // 0: full disk
+  { outerR: 59.85, outerInnerR:  0,    midR:  0,    midInnerR:  0,    name: 'disk'    },
+  // 1: ring + center dot   (outer ring r=55.87 sw=8 → outer 59.87 / inner 51.87)
+  { outerR: 59.87, outerInnerR: 51.87, midR: 14.97, midInnerR:  0,    name: 'r+dot'   },
+  // 2: two rings           (inner ring r=30.93 sw=8 → outer 34.93 / inner 26.93)
+  { outerR: 59.87, outerInnerR: 51.87, midR: 34.93, midInnerR: 26.93, name: '2 rings' },
+  // 3: single ring
+  { outerR: 59.87, outerInnerR: 51.87, midR:  0,    midInnerR:  0,    name: 'ring'    },
+  // 4: small dot
+  { outerR: 16,    outerInnerR:  0,    midR:  0,    midInnerR:  0,    name: 'dot'     },
+];
+
+// ── Math ──────────────────────────────────────────────────────
+const lerp = (a, b, t) => a + (b - a) * t;
+
+function lerpTile(A, B, t) {
+  return {
+    outerR:      lerp(A.outerR,      B.outerR,      t),
+    outerInnerR: lerp(A.outerInnerR, B.outerInnerR, t),
+    midR:        lerp(A.midR,        B.midR,        t),
+    midInnerR:   lerp(A.midInnerR,   B.midInnerR,   t),
+  };
+}
+
+const easings = {
+  linear: t => t,
+  ease:   t => t * t * (3 - 2 * t),                  // smoothstep
+  cubic:  t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2, // ease-in-out cubic
+};
+
+// ── Drawing ───────────────────────────────────────────────────
+function drawAnnulus(ctx, cx, cy, R, innerR, color) {
+  if (R <= 0.1) return;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  if (innerR > 0.1 && innerR < R) {
+    ctx.arc(cx, cy, innerR, 0, Math.PI * 2, true); // cw → hole
+  }
+  ctx.fill('evenodd');
+}
+
+function drawTile(ctx, cx, cy, size, params, color) {
+  const s = size / 120;
+  drawAnnulus(ctx, cx, cy, params.outerR * s, params.outerInnerR * s, color);
+  drawAnnulus(ctx, cx, cy, params.midR   * s, params.midInnerR   * s, color);
+}
+
+// ── Main render ───────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+let currentT = 0;
+let easeName = 'linear';
+
+function paramsAt(t) {
+  // t goes 0..(TILES.length - 1). Bilinear between adjacent tiles.
+  const i = Math.min(Math.floor(t), TILES.length - 2);
+  const f = Math.min(1, Math.max(0, t - i));
+  const eased = easings[easeName](f);
+  return { params: lerpTile(TILES[i], TILES[i + 1], eased), idxLo: i, idxHi: i + 1, frac: f };
+}
+
+function render() {
+  const W = canvas.width, H = canvas.height;
+  ctx.fillStyle = '#060606';
+  ctx.fillRect(0, 0, W, H);
+
+  const { params, idxLo, idxHi, frac } = paramsAt(currentT);
+  const size  = Math.min(W, H) * 0.85;
+  drawTile(ctx, W / 2, H / 2, size, params, '#e0e0e0');
+
+  // Update params display
+  document.getElementById('params').textContent =
+    `[ ${TILES[idxLo].name.padEnd(8)} → ${TILES[idxHi].name.padEnd(8)} | t=${frac.toFixed(2)} ]    ` +
+    `outerR=${params.outerR.toFixed(1)}  outerInnerR=${params.outerInnerR.toFixed(1)}  ` +
+    `midR=${params.midR.toFixed(1)}  midInnerR=${params.midInnerR.toFixed(1)}`;
+
+  // Update active keyframe highlight
+  document.querySelectorAll('.kf').forEach((el, i) => {
+    el.classList.toggle('active', i === idxLo || (i === idxHi && frac > 0.5));
+  });
+}
+
+// ── Keyframe thumbnails ────────────────────────────────────────
+const kfContainer = document.getElementById('keyframes');
+TILES.forEach((tile, i) => {
+  const div = document.createElement('div');
+  div.className = 'kf';
+  const c = document.createElement('canvas');
+  c.width = 240; c.height = 240;
+  div.appendChild(c);
+  const lbl = document.createElement('span');
+  lbl.className = 'kf-label';
+  lbl.textContent = i;
+  div.appendChild(lbl);
+  div.addEventListener('click', () => {
+    currentT = i;
+    document.getElementById('t').value = i;
+    document.getElementById('v-t').textContent = i.toFixed(2);
+    render();
+  });
+  kfContainer.appendChild(div);
+
+  // Draw the tile preview
+  const ctx2 = c.getContext('2d');
+  ctx2.fillStyle = '#1a1a1a';
+  ctx2.fillRect(0, 0, c.width, c.height);
+  drawTile(ctx2, c.width/2, c.height/2, c.width * 0.8, tile, '#5af');
+});
+
+// ── Controls ──────────────────────────────────────────────────
+const tEl = document.getElementById('t');
+tEl.addEventListener('input', () => {
+  currentT = parseFloat(tEl.value);
+  document.getElementById('v-t').textContent = currentT.toFixed(2);
+  render();
+});
+
+document.querySelectorAll('.ease-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ease-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    easeName = btn.dataset.ease;
+    render();
+  });
+});
+
+let playing = false;
+let playSpeed = 0.6; // tiles per second
+let lastFrame = performance.now();
+
+document.getElementById('speed').addEventListener('input', e => {
+  playSpeed = parseFloat(e.target.value);
+  document.getElementById('v-speed').textContent = playSpeed.toFixed(2);
+});
+
+document.getElementById('btn-play').addEventListener('click', function() {
+  playing = !playing;
+  this.textContent = playing ? '❚❚ PAUSE' : '▶ AUTO-PLAY';
+  this.classList.toggle('active', playing);
+  if (playing) { lastFrame = performance.now(); requestAnimationFrame(loop); }
+});
+
+function loop(now) {
+  if (!playing) return;
+  const dt = Math.min((now - lastFrame) / 1000, 0.1);
+  lastFrame = now;
+  currentT += playSpeed * dt;
+  if (currentT >= TILES.length - 1) currentT = 0; // loop
+  tEl.value = currentT;
+  document.getElementById('v-t').textContent = currentT.toFixed(2);
+  render();
+  requestAnimationFrame(loop);
+}
+
+render();
+</script>
+</body>
+</html>
