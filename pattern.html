@@ -151,6 +151,98 @@
 
   #file-input { display: none; }
 
+  /* ── Dual-handle range slider ──────────────────────────── */
+  .dual-slider {
+    position: relative;
+    height: 22px;
+    margin: 6px 0;
+  }
+  .dual-slider .track {
+    position: absolute;
+    top: 50%;
+    left: 0; right: 0;
+    height: 4px;
+    transform: translateY(-50%);
+    background: var(--line-2);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .dual-slider .fill {
+    position: absolute;
+    top: 50%;
+    height: 4px;
+    transform: translateY(-50%);
+    background: var(--accent);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .dual-slider input[type=range] {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 22px;
+    margin: 0;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    pointer-events: none;
+  }
+  .dual-slider input[type=range]::-webkit-slider-runnable-track {
+    height: 22px;
+    background: transparent;
+  }
+  .dual-slider input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    pointer-events: auto;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--panel);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    cursor: pointer;
+    margin-top: 0;
+  }
+  .dual-slider input[type=range]::-moz-range-track {
+    height: 22px;
+    background: transparent;
+  }
+  .dual-slider input[type=range]::-moz-range-thumb {
+    pointer-events: auto;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--panel);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+
+  /* Video tab placeholder */
+  .placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px 16px;
+    color: var(--text-soft);
+    text-align: center;
+    border: 1px dashed var(--line-2);
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+  .placeholder svg { width: 28px; height: 28px; opacity: 0.6; }
+  .placeholder .placeholder-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-mut);
+  }
+  .placeholder .placeholder-body {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
   /* ── Group label ─────────────────────────────────────────── */
   .group-label {
     font-size: 10px;
@@ -211,6 +303,34 @@
     cursor: pointer;
   }
   select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── Tabs ──────────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    background: var(--bg);
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+  }
+  .tab-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-mut);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    width: auto;
+    letter-spacing: 0;
+  }
+  .tab-btn:hover { background: rgba(20,20,20,0.04); color: var(--text); }
+  .tab-btn[aria-selected="true"] { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .tab-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   /* ── Color swatches ─────────────────────────────────────── */
   .swatch-row {
@@ -339,25 +459,88 @@
 
   <div class="scroll">
 
-    <!-- Source -->
-    <div class="group">
-      <div class="group-label">Source</div>
-      <div>
-        <label class="field-label" for="source">Pattern source</label>
-        <select id="source">
-          <option value="noise">Noise</option>
-          <option value="image">Image</option>
-          <option value="video">Video</option>
-        </select>
+    <!-- Source tabs -->
+    <div class="tabs" role="tablist" aria-label="Input source">
+      <button class="tab-btn" id="tab-source-pattern" type="button" role="tab" aria-selected="true"  aria-controls="source-pattern">Pattern</button>
+      <button class="tab-btn" id="tab-source-image"   type="button" role="tab" aria-selected="false" aria-controls="source-image">Image</button>
+      <button class="tab-btn" id="tab-source-video"   type="button" role="tab" aria-selected="false" aria-controls="source-video">Video</button>
+    </div>
+
+    <!-- Source: Pattern -->
+    <div id="source-pattern">
+      <div class="group">
+        <div class="group-label">Pattern</div>
+
+        <div>
+          <label class="field-label" for="gridsize">Scale<span class="val" id="v-gridsize"></span></label>
+          <input type="range" id="gridsize" min="0" max="100" value="40" step="1">
+        </div>
+
+        <div>
+          <label class="field-label" for="seed">Seed<span class="val" id="v-seed"></span></label>
+          <input type="range" id="seed" min="0" max="999" value="1" step="1">
+        </div>
+
+        <div>
+          <label class="field-label" for="octaves">Octaves<span class="val" id="v-octaves"></span></label>
+          <input type="range" id="octaves" min="1" max="8" value="4" step="1">
+        </div>
+
+        <div>
+          <label class="field-label" for="speed">Speed<span class="val" id="v-speed"></span></label>
+          <input type="range" id="speed" min="0" max="3" value="0" step="0.01">
+        </div>
       </div>
     </div>
 
-    <!-- Pattern (grid) -->
+    <!-- Source: Image -->
+    <div id="source-image" hidden>
+      <div class="group">
+        <div class="group-label">Image</div>
+        <div class="image-picker">
+          <div id="thumb" role="button" tabindex="0" aria-label="Upload image">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div class="picker-actions">
+            <button class="change-btn" id="change-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="change-btn-label">Add image</span>
+            </button>
+            <button class="remove-btn" id="remove-btn" hidden>Remove</button>
+          </div>
+          <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp">
+        </div>
+
+        <div>
+          <label class="field-label">Clip<span class="val" id="v-clip">0 – 100</span></label>
+          <div class="dual-slider">
+            <div class="track"></div>
+            <div class="fill" id="clip-fill"></div>
+            <input type="range" id="clip-low"  min="0" max="100" value="0"   step="1" aria-label="Clip low">
+            <input type="range" id="clip-high" min="0" max="100" value="100" step="1" aria-label="Clip high">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Source: Video -->
+    <div id="source-video" hidden>
+      <div class="group">
+        <div class="group-label">Video</div>
+        <div class="placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <div class="placeholder-title">Video input — coming soon</div>
+          <div class="placeholder-body">Falling back to pattern noise for now.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Always-visible Global section -->
     <div class="group">
-      <div class="group-label">Pattern</div>
+      <div class="group-label">Global · Grid</div>
 
       <div>
-        <label class="field-label" for="scale">Scale<span class="val" id="v-scale"></span></label>
+        <label class="field-label" for="scale">Symbol size<span class="val" id="v-scale"></span></label>
         <input type="range" id="scale" min="0" max="100" value="50" step="1">
       </div>
 
@@ -367,60 +550,70 @@
       </div>
     </div>
 
-    <!-- Noise -->
     <div class="group">
-      <div class="group-label">Noise</div>
+      <div class="group-label">Aspect ratio</div>
 
       <div>
-        <label class="field-label" for="gridsize">Grid size<span class="val" id="v-gridsize"></span></label>
-        <input type="range" id="gridsize" min="0" max="100" value="40" step="1">
+        <label class="field-label" for="aspect">Aspect</label>
+        <select id="aspect">
+          <option value="16:9" selected>16:9</option>
+          <option value="1:1">1:1</option>
+          <option value="9:16">9:16</option>
+          <option value="4:5">4:5</option>
+          <option value="3:2">3:2</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div id="aspect-custom" hidden style="display:flex;gap:10px">
+        <div style="flex:1">
+          <label class="field-label" for="aspectW">W</label>
+          <input type="range" id="aspectW" min="1" max="100" value="16" step="1">
+        </div>
+        <div style="flex:1">
+          <label class="field-label" for="aspectH">H</label>
+          <input type="range" id="aspectH" min="1" max="100" value="9" step="1">
+        </div>
       </div>
     </div>
 
-    <!-- Image (optional) -->
-    <div class="group" id="image-group" hidden>
-      <div class="group-label">Image</div>
+    <div class="group">
+      <div class="group-label">Gradient</div>
 
-      <div class="image-picker">
-        <div id="thumb" role="button" tabindex="0" aria-label="Upload image">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        </div>
-        <div class="picker-actions">
-          <button class="change-btn" id="change-btn">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span id="change-btn-label">Change image</span>
-          </button>
-          <button class="remove-btn" id="remove-btn" hidden>Remove</button>
-        </div>
-        <input type="file" id="file-input" accept="image/png,image/jpeg,image/webp">
-      </div>
-    </div>
-
-    <!-- Video -->
-    <div class="group" id="video-group" hidden>
-      <div class="group-label">Video</div>
-
-      <div class="image-picker">
-        <div id="video-thumb" role="button" tabindex="0" aria-label="Upload video">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        </div>
-        <div class="picker-actions">
-          <button class="change-btn" id="video-change-btn">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span id="video-change-btn-label">Change video</span>
-          </button>
-          <button class="remove-btn" id="video-remove-btn" hidden>Remove</button>
-        </div>
-        <input type="file" id="video-file-input" accept="video/mp4,video/webm,video/quicktime">
+      <div class="toggle-row">
+        <span class="toggle-label">Enable</span>
+        <label class="switch">
+          <input type="checkbox" id="gradient">
+          <span class="switch-track"></span>
+        </label>
       </div>
 
       <div>
-        <label class="field-label" for="video-time">Frame<span class="val" id="v-video-time">0.0s</span></label>
-        <input type="range" id="video-time" min="0" max="1" value="0" step="0.01" disabled>
+        <label class="field-label" for="gradangle">Direction<span class="val" id="v-gradangle"></span></label>
+        <input type="range" id="gradangle" min="0" max="360" value="0" step="1">
+      </div>
+
+      <div>
+        <label class="field-label" for="gradpos">Position<span class="val" id="v-gradpos"></span></label>
+        <input type="range" id="gradpos" min="0" max="100" value="50" step="1">
+      </div>
+
+      <div>
+        <label class="field-label" for="gradfade">Fade<span class="val" id="v-gradfade"></span></label>
+        <input type="range" id="gradfade" min="0" max="100" value="0" step="1">
+      </div>
+
+      <div>
+        <label class="field-label" for="gradedge">Edge noise<span class="val" id="v-gradedge"></span></label>
+        <input type="range" id="gradedge" min="0" max="100" value="30" step="1">
+      </div>
+
+      <div>
+        <label class="field-label" for="gradedgescale">Edge scale<span class="val" id="v-gradedgescale"></span></label>
+        <input type="range" id="gradedgescale" min="0" max="100" value="40" step="1">
       </div>
     </div>
 
-    <!-- Colors -->
     <div class="group">
       <div class="group-label">Colors</div>
 
@@ -481,24 +674,39 @@ const PALETTE = [
   { name: 'Clay',      hex: '#9D7B51' },
 ];
 
-// ── Noise (value noise + fbm) ─────────────────────────────────
-function hash(x, y) {
-  const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+// ── Noise (3D value noise + fbm) ──────────────────────────────
+function hash3(x, y, z, seed) {
+  const n = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + seed * 19.19) * 43758.5453123;
   return n - Math.floor(n);
 }
 const smoothstep = t => t * t * (3 - 2 * t);
-function valueNoise(x, y) {
-  const ix = Math.floor(x), iy = Math.floor(y);
-  const fx = x - ix, fy = y - iy;
-  const ux = smoothstep(fx), uy = smoothstep(fy);
-  const a = hash(ix,   iy),   b = hash(ix+1, iy);
-  const c = hash(ix,   iy+1), d = hash(ix+1, iy+1);
-  return a + (b-a)*ux + (c-a)*uy + (a-b-c+d)*ux*uy;
+function valueNoise3(x, y, z, seed) {
+  const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+  const fx = x - ix, fy = y - iy, fz = z - iz;
+  const ux = smoothstep(fx), uy = smoothstep(fy), uz = smoothstep(fz);
+
+  const n000 = hash3(ix,   iy,   iz,   seed);
+  const n100 = hash3(ix+1, iy,   iz,   seed);
+  const n010 = hash3(ix,   iy+1, iz,   seed);
+  const n110 = hash3(ix+1, iy+1, iz,   seed);
+  const n001 = hash3(ix,   iy,   iz+1, seed);
+  const n101 = hash3(ix+1, iy,   iz+1, seed);
+  const n011 = hash3(ix,   iy+1, iz+1, seed);
+  const n111 = hash3(ix+1, iy+1, iz+1, seed);
+
+  const x00 = n000 + (n100 - n000) * ux;
+  const x10 = n010 + (n110 - n010) * ux;
+  const x01 = n001 + (n101 - n001) * ux;
+  const x11 = n011 + (n111 - n011) * ux;
+
+  const y0 = x00 + (x10 - x00) * uy;
+  const y1 = x01 + (x11 - x01) * uy;
+  return y0 + (y1 - y0) * uz;
 }
-function fbm(x, y, octaves, lacunarity, gain) {
+function fbm3(x, y, z, seed, octaves, lacunarity, gain) {
   let v = 0, amp = 1, freq = 1, max = 0;
   for (let i = 0; i < octaves; i++) {
-    v += valueNoise(x * freq, y * freq) * amp;
+    v += valueNoise3(x * freq, y * freq, z * freq, seed) * amp;
     max += amp; amp *= gain; freq *= lacunarity;
   }
   return v / max;
@@ -541,37 +749,78 @@ const LACUNARITY      = 2.0;
 const RENDERSCALE     = 2;
 const EXPORT_LONG_EDGE = 2048;
 const SPACING_RATIO   = 0.15;
-const DEFAULT_ASPECT  = 16 / 9;  // canvas aspect when no image is loaded
-const OCTAVES         = 4;
+const DEFAULT_ASPECT  = 16 / 9;
 const GAIN            = 0.5;
 
 // ── State ─────────────────────────────────────────────────────
 const state = {
-  source:         'noise',       // 'noise' | 'image' | 'video'
-  scale01:        0.50,         // 0..1 → cellsize
-  symbols:        5,            // 1..5
-  gridsize01:     0.40,         // 0..1 → noise feature size
+  source:         'pattern',    // 'pattern' | 'image' | 'video'
+  scale01:        0.50,
+  symbols:        5,
+  gridsize01:     0.40,
   fgIdx:          8,            // Earth
   bgIdx:          3,            // Sky
   invert:         false,
   transparent:    false,
-  imgPixels:      null,         // Float32Array luminance, null = pure noise
+  seed:           1,
+  octaves:        4,
+  speed:          0.0,
+  aspect:         '16:9',
+  aspectW:        16,
+  aspectH:        9,
+  // Image source state
+  imgPixels:      null,
   imgW:           0,
   imgH:           0,
+  clipLow:        0.0,
+  clipHigh:       1.0,
+  // Gradient mask
+  gradient:       false,
+  gradientAngle:  0,
+  gradientPos:    50,
+  gradientFade:   0,
+  gradientEdge:   30,
+  gradientEdgeScale: 40,
 };
+
+let zTime = 0;
+let animRaf = 0;
+let animLast = 0;
+
+// ── Canvas + render ───────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+let _vals = new Float32Array(0);
+let _rank = new Uint32Array(0);
+let renderScheduled = false;
+
+function scheduleRender() {
+  if (renderScheduled) return;
+  renderScheduled = true;
+  requestAnimationFrame(() => { renderScheduled = false; render(); });
+}
+
+function computeCanvasSize() {
+  let aspect = DEFAULT_ASPECT;
+  if (state.aspect === 'custom') {
+    const w = Math.max(1, state.aspectW | 0);
+    const h = Math.max(1, state.aspectH | 0);
+    aspect = w / h;
+  } else if (/^\d+:\d+$/.test(state.aspect)) {
+    const [w, h] = state.aspect.split(':').map(n => parseFloat(n));
+    if (w > 0 && h > 0) aspect = w / h;
+  }
+  let CW, CH;
+  if (aspect >= 1) { CW = EXPORT_LONG_EDGE; CH = Math.round(EXPORT_LONG_EDGE / aspect); }
+  else             { CH = EXPORT_LONG_EDGE; CW = Math.round(EXPORT_LONG_EDGE * aspect); }
+  return { CW, CH };
+}
 
 // ── Image input ───────────────────────────────────────────────
 const offscreen = document.createElement('canvas');
 const offCtx    = offscreen.getContext('2d', { willReadFrequently: true });
 let currentObjectURL = null;
-let currentVideoObjectURL = null;
-
-const videoEl = document.createElement('video');
-videoEl.muted = true;
-videoEl.playsInline = true;
-videoEl.preload = 'metadata';
-videoEl.style.display = 'none';
-document.body.appendChild(videoEl);
 
 function setImageFromBitmapLike(source, naturalW, naturalH) {
   state.imgW = naturalW;
@@ -592,6 +841,7 @@ function loadImageFile(file) {
   const img = new Image();
   img.onload = () => {
     setImageFromBitmapLike(img, img.naturalWidth, img.naturalHeight);
+    const thumbEl = document.getElementById('thumb');
     thumbEl.style.backgroundImage = `url(${currentObjectURL})`;
     thumbEl.classList.add('has-image');
     document.getElementById('change-btn-label').textContent = 'Change image';
@@ -606,154 +856,54 @@ function removeImage() {
   state.imgPixels = null;
   state.imgW = 0;
   state.imgH = 0;
+  const thumbEl = document.getElementById('thumb');
   thumbEl.style.backgroundImage = '';
   thumbEl.classList.remove('has-image');
-  document.getElementById('change-btn-label').textContent = 'Change image';
+  document.getElementById('change-btn-label').textContent = 'Add image';
   document.getElementById('remove-btn').hidden = true;
   document.getElementById('file-input').value = '';
   scheduleRender();
 }
 
-function removeVideo() {
-  if (currentVideoObjectURL) { URL.revokeObjectURL(currentVideoObjectURL); currentVideoObjectURL = null; }
-  videoEl.pause();
-  videoEl.removeAttribute('src');
-  videoEl.load();
-  state.imgPixels = null;
-  state.imgW = 0;
-  state.imgH = 0;
-
-  const vThumb = document.getElementById('video-thumb');
-  vThumb.style.backgroundImage = '';
-  vThumb.classList.remove('has-image');
-  document.getElementById('video-remove-btn').hidden = true;
-  document.getElementById('video-file-input').value = '';
-
-  const tEl = document.getElementById('video-time');
-  tEl.value = '0';
-  tEl.disabled = true;
-  document.getElementById('v-video-time').textContent = '0.0s';
-  scheduleRender();
-}
-
-async function captureVideoFrame() {
-  if (!videoEl.videoWidth || !videoEl.videoHeight) return;
-  setImageFromBitmapLike(videoEl, videoEl.videoWidth, videoEl.videoHeight);
-
-  const vThumb = document.getElementById('video-thumb');
-  try {
-    const thumbC = document.createElement('canvas');
-    const tw = 160;
-    const th = Math.max(1, Math.round(tw * (videoEl.videoHeight / videoEl.videoWidth)));
-    thumbC.width = tw;
-    thumbC.height = th;
-    const tctx = thumbC.getContext('2d');
-    tctx.drawImage(videoEl, 0, 0, tw, th);
-    vThumb.style.backgroundImage = `url(${thumbC.toDataURL('image/png')})`;
-    vThumb.classList.add('has-image');
-  } catch {
-    // ignore thumb snapshot failures; render will still work
-  }
-}
-
-function loadVideoFile(file) {
-  if (currentVideoObjectURL) URL.revokeObjectURL(currentVideoObjectURL);
-  currentVideoObjectURL = URL.createObjectURL(file);
-  videoEl.src = currentVideoObjectURL;
-  videoEl.currentTime = 0;
-
-  document.getElementById('video-remove-btn').hidden = false;
-
-  const tEl = document.getElementById('video-time');
-  tEl.disabled = true;
-  tEl.max = '1';
-  tEl.value = '0';
-  document.getElementById('v-video-time').textContent = '0.0s';
-
-  videoEl.addEventListener('loadedmetadata', () => {
-    const dur = Number.isFinite(videoEl.duration) && videoEl.duration > 0 ? videoEl.duration : 1;
-    tEl.max = String(dur);
-    tEl.step = String(Math.max(0.01, dur / 500));
-    tEl.disabled = false;
-  }, { once: true });
-
-  videoEl.addEventListener('loadeddata', async () => {
-    await captureVideoFrame();
-    scheduleRender();
-  }, { once: true });
-
-  videoEl.addEventListener('seeked', () => {
-    captureVideoFrame();
-    scheduleRender();
-  });
-
-  videoEl.load();
-}
-
-function sampleImage(normX, normY) {
+// Cover-fit sampler — image fills canvas, preserving aspect, center-cropping overflow.
+function sampleImage(normX, normY, canvasAspect) {
   if (!state.imgPixels) return 0.5;
-  const imgAspect  = state.imgW / state.imgH;
-  const canvasAspect = canvas.width / canvas.height;
+  const imgAspect = state.imgW / state.imgH;
   let sx, sy;
   if (imgAspect > canvasAspect) {
-    const drawn = canvasAspect / imgAspect;
-    const off   = (1 - drawn) / 2;
-    sx = normX; sy = (normY - off) / drawn;
+    const k = canvasAspect / imgAspect;
+    sx = normX * k + (1 - k) * 0.5;
+    sy = normY;
   } else {
-    const drawn = imgAspect / canvasAspect;
-    const off   = (1 - drawn) / 2;
-    sx = (normX - off) / drawn; sy = normY;
+    const k = imgAspect / canvasAspect;
+    sy = normY * k + (1 - k) * 0.5;
+    sx = normX;
   }
-  if (sx < 0 || sx > 1 || sy < 0 || sy > 1) return 0.5;
+  if (sx < 0) sx = 0; else if (sx > 1) sx = 1;
+  if (sy < 0) sy = 0; else if (sy > 1) sy = 1;
   const px = Math.min(Math.floor(sx * state.imgW), state.imgW - 1);
   const py = Math.min(Math.floor(sy * state.imgH), state.imgH - 1);
   return state.imgPixels[py * state.imgW + px];
 }
 
-// ── Canvas + render ───────────────────────────────────────────
-const canvas = document.getElementById('canvas');
-const ctx    = canvas.getContext('2d');
-
-let _vals = new Float32Array(0);
-let _rank = new Uint32Array(0);
-let renderScheduled = false;
-
-function scheduleRender() {
-  if (renderScheduled) return;
-  renderScheduled = true;
-  requestAnimationFrame(() => { renderScheduled = false; render(); });
-}
-
-function computeCanvasSize() {
-  // Canvas aspect: matches input image when present, otherwise a sensible default
-  const aspect = state.imgW && state.imgH ? state.imgW / state.imgH : DEFAULT_ASPECT;
-  let CW, CH;
-  if (aspect >= 1) { CW = EXPORT_LONG_EDGE; CH = Math.round(EXPORT_LONG_EDGE / aspect); }
-  else             { CH = EXPORT_LONG_EDGE; CW = Math.round(EXPORT_LONG_EDGE * aspect); }
-  return { CW, CH };
-}
-
 function render() {
   const { CW, CH } = computeCanvasSize();
 
-  // Map UI controls → internal params
-  const cellsize  = Math.round(lerp(80, 8, state.scale01));      // bigger slider = denser
-  const noiseScl  = lerp(1, 12, state.gridsize01);               // bigger = larger noise features
-  const octaves   = OCTAVES;
+  const cellsize  = Math.round(lerp(80, 8, state.scale01));
+  const noiseScl  = lerp(1, 12, state.gridsize01);
+  const octaves   = Math.max(1, state.octaves | 0);
   const gain      = GAIN;
   const fgColor   = PALETTE[state.fgIdx].hex;
   const bgColor   = PALETTE[state.bgIdx].hex;
-  const hasImage  = state.source !== 'noise' && !!state.imgPixels;
+  const seed      = state.seed | 0;
 
   const effectiveFg = state.invert ? bgColor : fgColor;
   const effectiveBg = state.invert ? fgColor : bgColor;
 
-  // Build active keyframes (heaviest first; blank pseudo-tile at lightest end)
   const activeTiles = TILE_PARAMS.slice(0, state.symbols);
   activeTiles.push(BLANK_PARAMS);
   const N = activeTiles.length - 1;
 
-  // Grid (cells fill canvas evenly)
   const cols   = Math.max(1, Math.round(CW / cellsize));
   const rows   = Math.max(1, Math.round(CH / cellsize));
   const cellW  = CW / cols;
@@ -768,30 +918,35 @@ function render() {
 
   const sc = 1 / noiseScl;
 
-  // 1. Compute per-cell brightness — noise is the base; image (if present) shapes it
+  // 1. Compute per-cell brightness — sources are exclusive, no mixing
+  const useImage     = state.source === 'image' && state.imgPixels;
+  const targetAspect = CW / CH;
+  const clipLo  = state.clipLow;
+  const clipHi  = state.clipHigh;
+  const clipRng = Math.max(0.0001, clipHi - clipLo);
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
-      const noise = fbm(c * sc, r * sc * 0.55, octaves, LACUNARITY, gain);
       let v;
-      if (hasImage) {
-        const lum = sampleImage(c / cols, r / rows);
-        v = lum * 0.85 + noise * 0.15;
+      if (useImage) {
+        const lum = sampleImage(c / cols, r / rows, targetAspect);
+        v = (lum - clipLo) / clipRng;
+        if (v < 0) v = 0; else if (v > 1) v = 1;
       } else {
-        v = noise;
+        v = fbm3(c * sc, r * sc * 0.55, zTime, seed, octaves, LACUNARITY, gain);
       }
       _vals[i] = v;
       _rank[i] = i;
     }
   }
 
-  // 2. Histogram-equalize to a continuous index in [0, N]
+  // 2. Histogram-equalize → continuous tile index
   _rank.subarray(0, total).sort((a, b) => _vals[a] - _vals[b]);
   const denom = total > 1 ? total - 1 : 1;
   const tileMap = new Float32Array(total);
   for (let i = 0; i < total; i++) tileMap[_rank[i]] = (i / denom) * N;
 
-  // 3. Resize canvas (supersampled) and paint background
+  // 3. Resize canvas (supersampled)
   const physW = CW * RENDERSCALE, physH = CH * RENDERSCALE;
   if (canvas.width !== physW || canvas.height !== physH) {
     canvas.width  = physW;
@@ -805,17 +960,51 @@ function render() {
     ctx.fillRect(0, 0, CW, CH);
   }
 
+  // 3b. Gradient mask precompute
+  const gradOn = state.gradient;
+  let gradDx = 0, gradDy = 0, gradPos = 0.5, gradFade = 0, gradEdge = 0;
+  let projMin = 0, projRange = 1, jitterFreq = 8;
+  if (gradOn) {
+    const ang = state.gradientAngle * Math.PI / 180;
+    gradDx = Math.cos(ang);
+    gradDy = Math.sin(ang);
+    gradPos  = state.gradientPos  / 100;
+    gradFade = state.gradientFade / 100;
+    gradEdge = state.gradientEdge / 100;
+    jitterFreq = lerp(2, 30, state.gradientEdgeScale / 100);
+    const projs = [0, gradDx, gradDy, gradDx + gradDy];
+    projMin = Math.min(...projs);
+    projRange = Math.max(...projs) - projMin || 1;
+  }
+
   // 4. Draw morphed tiles
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
+
+      let fadeAmt = 1;
+      if (gradOn) {
+        const nx = (c + 0.5) / cols;
+        const ny = (r + 0.5) / rows;
+        const proj  = (nx * gradDx + ny * gradDy - projMin) / projRange;
+        const j     = fbm3(nx * jitterFreq, ny * jitterFreq, zTime * 0.1 + 100, seed + 31, 3, LACUNARITY, 0.5);
+        const projJ = proj + (j - 0.5) * gradEdge;
+        const dist  = projJ - gradPos;
+        if (dist < 0) continue;
+        if (gradFade > 0.001 && dist < gradFade) {
+          const t = dist / gradFade;
+          fadeAmt = t * t * (3 - 2 * t);
+        }
+        if (fadeAmt < 0.05) continue;
+      }
+
       const f    = tileMap[i];
       const lo   = Math.min(Math.floor(f), N);
       const hi   = Math.min(lo + 1, N);
       const frac = f - lo;
       const params = (lo === hi) ? activeTiles[lo] : lerpTileParams(activeTiles[lo], activeTiles[hi], frac);
       if (params.outerR <= 0.1 && params.midR <= 0.1) continue;
-      drawMorphedTile(ctx, (c + 0.5) * cellW, (r + 0.5) * cellH, tileSize, params, effectiveFg);
+      drawMorphedTile(ctx, (c + 0.5) * cellW, (r + 0.5) * cellH, tileSize * fadeAmt, params, effectiveFg);
     }
   }
 }
@@ -831,7 +1020,7 @@ function bindSlider(id, onUpdate, fmt) {
     scheduleRender();
   }
   el.addEventListener('input', apply);
-  apply(); // initialise label + state on load
+  apply();
 }
 bindSlider('scale',         v => { state.scale01         = v / 100; }, v => `${v|0}`);
 bindSlider('symbols',       v => { state.symbols         = v|0;     }, v => `${v|0}`);
@@ -861,49 +1050,49 @@ function buildSwatches(containerId, currentKey) {
 buildSwatches('swatches-fg', 'fgIdx');
 buildSwatches('swatches-bg', 'bgIdx');
 
-// Transparent background toggle
+// Transparent + Invert
 const stageEl = document.getElementById('stage');
 document.getElementById('transparent').addEventListener('change', e => {
   state.transparent = e.target.checked;
   stageEl.classList.toggle('checkerboard', state.transparent);
   scheduleRender();
 });
-
-// Invert toggle (swap fg/bg)
 document.getElementById('invert').addEventListener('change', e => {
   state.invert = e.target.checked;
   scheduleRender();
 });
 
-// Source picker
-const sourceEl = document.getElementById('source');
-const imageGroupEl = document.getElementById('image-group');
-const videoGroupEl = document.getElementById('video-group');
-function applySourceUI() {
-  imageGroupEl.hidden = state.source !== 'image';
-  videoGroupEl.hidden = state.source !== 'video';
-}
-sourceEl.addEventListener('change', () => {
-  state.source = sourceEl.value;
-  if (state.source === 'noise') {
-    removeImage();
-    removeVideo();
+// Source tabs
+const SOURCE_TABS = ['pattern', 'image', 'video'];
+const sourceBodies = {
+  pattern: document.getElementById('source-pattern'),
+  image:   document.getElementById('source-image'),
+  video:   document.getElementById('source-video'),
+};
+const sourceTabs = {
+  pattern: document.getElementById('tab-source-pattern'),
+  image:   document.getElementById('tab-source-image'),
+  video:   document.getElementById('tab-source-video'),
+};
+function applySource(active) {
+  state.source = active;
+  for (const k of SOURCE_TABS) {
+    sourceBodies[k].hidden = (k !== active);
+    sourceTabs[k].setAttribute('aria-selected', k === active ? 'true' : 'false');
   }
-  applySourceUI();
   scheduleRender();
-});
-applySourceUI();
+}
+SOURCE_TABS.forEach(k => sourceTabs[k].addEventListener('click', () => applySource(k)));
+applySource('pattern');
 
 // Image picker
 const thumbEl = document.getElementById('thumb');
 const fileEl  = document.getElementById('file-input');
-thumbEl.addEventListener('click', () => fileEl.click());
-document.getElementById('change-btn').addEventListener('click', () => fileEl.click());
+thumbEl.addEventListener('click',   () => fileEl.click());
 thumbEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileEl.click(); } });
-fileEl.addEventListener('change', () => { if (fileEl.files[0]) loadImageFile(fileEl.files[0]); });
+document.getElementById('change-btn').addEventListener('click', () => fileEl.click());
 document.getElementById('remove-btn').addEventListener('click', removeImage);
-
-// Drag & drop on the thumb
+fileEl.addEventListener('change', () => { if (fileEl.files[0]) loadImageFile(fileEl.files[0]); });
 ['dragenter', 'dragover'].forEach(evt => {
   thumbEl.addEventListener(evt, e => { e.preventDefault(); thumbEl.classList.add('drag-over'); });
 });
@@ -914,25 +1103,84 @@ thumbEl.addEventListener('drop', e => {
   if (e.dataTransfer.files[0]) loadImageFile(e.dataTransfer.files[0]);
 });
 
-// Video picker + scrub
-const videoThumbEl = document.getElementById('video-thumb');
-const videoFileEl  = document.getElementById('video-file-input');
-const videoTimeEl  = document.getElementById('video-time');
-videoThumbEl.addEventListener('click', () => videoFileEl.click());
-document.getElementById('video-change-btn').addEventListener('click', () => videoFileEl.click());
-videoThumbEl.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); videoFileEl.click(); } });
-videoFileEl.addEventListener('change', () => { if (videoFileEl.files[0]) loadVideoFile(videoFileEl.files[0]); });
-document.getElementById('video-remove-btn').addEventListener('click', removeVideo);
+// Dual-handle clip slider — enforces low < high with a 1-unit minimum gap
+(function setupClipSlider() {
+  const lowEl  = document.getElementById('clip-low');
+  const highEl = document.getElementById('clip-high');
+  const fillEl = document.getElementById('clip-fill');
+  const valEl  = document.getElementById('v-clip');
 
-videoTimeEl.addEventListener('input', () => {
-  const t = parseFloat(videoTimeEl.value) || 0;
-  document.getElementById('v-video-time').textContent = `${t.toFixed(1)}s`;
+  function applyClip() {
+    let lo = parseInt(lowEl.value);
+    let hi = parseInt(highEl.value);
+    if (lo > hi - 1) {
+      if (document.activeElement === lowEl) { lo = hi - 1; lowEl.value  = lo; }
+      else                                  { hi = lo + 1; highEl.value = hi; }
+    }
+    state.clipLow  = lo / 100;
+    state.clipHigh = hi / 100;
+    fillEl.style.left  = lo + '%';
+    fillEl.style.right = (100 - hi) + '%';
+    valEl.textContent  = `${lo} – ${hi}`;
+    scheduleRender();
+  }
+  lowEl.addEventListener('input',  applyClip);
+  highEl.addEventListener('input', applyClip);
+  applyClip();
+})();
+
+// Pattern params
+bindSlider('seed',    v => { state.seed = v | 0; }, v => `${v|0}`);
+bindSlider('octaves', v => { state.octaves = v | 0; }, v => `${v|0}`);
+
+// Gradient mask
+document.getElementById('gradient').addEventListener('change', e => {
+  state.gradient = e.target.checked;
+  scheduleRender();
 });
-videoTimeEl.addEventListener('change', () => {
-  const t = parseFloat(videoTimeEl.value) || 0;
-  document.getElementById('v-video-time').textContent = `${t.toFixed(1)}s`;
-  if (!videoTimeEl.disabled) videoEl.currentTime = t;
+bindSlider('gradangle',    v => { state.gradientAngle     = v | 0; }, v => `${v|0}°`);
+bindSlider('gradpos',      v => { state.gradientPos       = v | 0; }, v => `${v|0}`);
+bindSlider('gradfade',     v => { state.gradientFade      = v | 0; }, v => `${v|0}`);
+bindSlider('gradedge',     v => { state.gradientEdge      = v | 0; }, v => `${v|0}`);
+bindSlider('gradedgescale',v => { state.gradientEdgeScale = v | 0; }, v => `${v|0}`);
+
+// Animation (only spins up when speed > 0)
+function stopAnimation() {
+  if (!animRaf) return;
+  cancelAnimationFrame(animRaf);
+  animRaf = 0;
+  animLast = 0;
+}
+function tick(now) {
+  if (!state.speed) { stopAnimation(); return; }
+  if (!animLast) animLast = now;
+  const dt = Math.min(0.05, (now - animLast) / 1000);
+  animLast = now;
+  zTime += state.speed * dt;
+  render();
+  animRaf = requestAnimationFrame(tick);
+}
+function startAnimationIfNeeded() {
+  if (state.speed > 0 && !animRaf) {
+    animLast = 0;
+    animRaf = requestAnimationFrame(tick);
+  } else if (state.speed <= 0) {
+    stopAnimation();
+  }
+}
+bindSlider('speed', v => { state.speed = Math.max(0, v); startAnimationIfNeeded(); }, v => (v === 0 ? '0' : v.toFixed(2)));
+
+// Aspect ratio
+const aspectEl = document.getElementById('aspect');
+const aspectCustomEl = document.getElementById('aspect-custom');
+aspectEl.addEventListener('change', () => {
+  state.aspect = aspectEl.value;
+  aspectCustomEl.hidden = state.aspect !== 'custom';
+  scheduleRender();
 });
+aspectCustomEl.hidden = state.aspect !== 'custom';
+bindSlider('aspectW', v => { state.aspectW = v | 0; }, v => `${v|0}`);
+bindSlider('aspectH', v => { state.aspectH = v | 0; }, v => `${v|0}`);
 
 // Download
 document.getElementById('download').addEventListener('click', () => {
