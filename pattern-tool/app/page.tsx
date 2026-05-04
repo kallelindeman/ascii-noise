@@ -15,12 +15,17 @@ import { ColorsControls } from '@/components/controls/colors-controls';
 import { DEFAULT_SETTINGS, type Settings } from '@/lib/types';
 import type { MediaState } from '@/lib/media-types';
 import { exportPatternMp4FromVideo } from '@/lib/export/video-export';
+import { exportPatternMp4NativeFromVideo } from '@/lib/export/native-video-export';
+import { isTauri } from '@/lib/tauri';
 import { toast } from 'sonner';
 
 export default function Page() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [media, setMedia]       = useState<MediaState>({ kind: 'none' });
   const [exporting, setExporting] = useState(false);
+  const desktop = isTauri();
+  const [exportMode, setExportMode] = useState<'browser' | 'native'>(desktop ? 'native' : 'browser');
+  const exportAbort = useRef<AbortController | null>(null);
   const canvasRef               = useRef<PatternCanvasHandle>(null);
 
   const update = useCallback((patch: Partial<Settings>) => {
@@ -72,20 +77,34 @@ export default function Page() {
     const canvas = canvasRef.current?.getCanvas();
     if (!canvas) return;
     if (media.kind === 'video') {
-      if (exporting) return;
+      if (exporting) {
+        exportAbort.current?.abort();
+        return;
+      }
       setExporting(true);
       const t = toast.loading('Exporting MP4…');
+      const ac = new AbortController();
+      exportAbort.current = ac;
       try {
-        await exportPatternMp4FromVideo(settings, media, {
-          preset: '720p',
-          onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
-        });
+        if (desktop && exportMode === 'native') {
+          await exportPatternMp4NativeFromVideo(settings, media, {
+            preset: '720p',
+            signal: ac.signal,
+            onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
+          });
+        } else {
+          await exportPatternMp4FromVideo(settings, media, {
+            preset: '720p',
+            onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
+          });
+        }
         toast.success('MP4 exported', { id: t });
       } catch (err) {
         console.error(err);
-        toast.error('MP4 export failed', { id: t });
+        toast.error((ac.signal.aborted ? 'MP4 export cancelled' : 'MP4 export failed'), { id: t });
       } finally {
         setExporting(false);
+        exportAbort.current = null;
       }
       return;
     }
@@ -139,13 +158,29 @@ export default function Page() {
               onCheckedChange={(checked) => update({ transparent: checked })}
             />
           </div>
+          {desktop && media.kind === 'video' && (
+            <label className="mb-3 block">
+              <span className="mb-1 block text-xs font-medium text-muted-foreground">Export mode</span>
+              <select
+                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                value={exportMode}
+                onChange={(e) => setExportMode(e.target.value as 'browser' | 'native')}
+                disabled={exporting}
+              >
+                <option value="native">Export (native)</option>
+                <option value="browser">Export (browser)</option>
+              </select>
+            </label>
+          )}
           <Button
             onClick={handleDownload}
-            disabled={exporting}
+            disabled={media.kind !== 'video' && exporting}
             className="w-full rounded-full font-semibold tracking-wide"
             size="lg"
           >
-            {media.kind === 'video' ? (exporting ? 'Exporting MP4…' : 'Export MP4') : 'Download pattern'}
+            {media.kind === 'video'
+              ? (exporting ? 'Cancel export' : (desktop && exportMode === 'native' ? 'Export (native)' : 'Export MP4'))
+              : 'Download pattern'}
             <Download className="h-3.5 w-3.5" strokeWidth={2.2} />
           </Button>
         </footer>
