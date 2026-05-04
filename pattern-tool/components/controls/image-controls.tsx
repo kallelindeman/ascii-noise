@@ -88,11 +88,13 @@ export function ImageControls({ settings, update, media, onMediaChange, canvasRe
 
     const extractor = createVideoLuminanceExtractor(
       { width: videoW, height: videoH },
-      { maxLongEdge: 768 },
+      // Lower decode resolution for smoother playback.
+      { maxLongEdge: 384 },
     );
 
     // First frame (poster) render.
     try {
+      handle.setExternalFrameDriving(true);
       handle.setMediaFrame(extractor.read(videoElRef.current));
       handle.requestRender();
     } catch (err) {
@@ -106,7 +108,14 @@ export function ImageControls({ settings, update, media, onMediaChange, canvasRe
       h.setMediaFrame(extractor.read(v));
       h.requestRender();
     });
-    return stop;
+    return () => {
+      stop();
+      const h = canvasRef.current;
+      if (h) {
+        h.setExternalFrameDriving(false);
+        h.setMediaFrame(null);
+      }
+    };
   }, [media.kind, videoUrl, videoW, videoH, settings.source, canvasRef]);
 
   async function loadFile(file: File) {

@@ -15,6 +15,8 @@ export interface PatternCanvasHandle {
   getCanvas: () => HTMLCanvasElement | null;
   /** Imperatively update the media luminance buffer (for video). */
   setMediaFrame: (frame: PatternImageData | null) => void;
+  /** If true, disables internal speed-based animation loop (video drives frames). */
+  setExternalFrameDriving: (driving: boolean) => void;
   /** Request a render on the next animation frame. */
   requestRender: () => void;
 }
@@ -40,9 +42,13 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
 
     // Latest values, accessed by the rAF loop without rebinding listeners.
     const settingsRef = useRef(settings);
-    const imageRef    = useRef(image);
+    const propImageRef = useRef<PatternImageData | null>(image);
+    const mediaFrameRef = useRef<PatternImageData | null>(null);
+    const externalDrivingRef = useRef(false);
     settingsRef.current = settings;
-    imageRef.current    = image;
+    propImageRef.current = image;
+
+    const effectiveImage = () => mediaFrameRef.current ?? propImageRef.current;
 
     const scheduleRender = () => {
       if (rafRef.current != null) return;
@@ -53,7 +59,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         render({
           canvas,
           settings: settingsRef.current,
-          image: imageRef.current,
+          image: effectiveImage(),
           zTime: zTime.current,
         });
       });
@@ -62,7 +68,10 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     useImperativeHandle(ref, () => ({
       getCanvas: () => canvasRef.current,
       setMediaFrame: (frame) => {
-        imageRef.current = frame;
+        mediaFrameRef.current = frame;
+      },
+      setExternalFrameDriving: (driving) => {
+        externalDrivingRef.current = driving;
       },
       requestRender: () => scheduleRender(),
     }), []);
@@ -95,6 +104,12 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       }
 
       const tick = (now: number) => {
+        // When a video is actively driving frames, do not also run the speed-based
+        // animation loop — it causes double renders and stutter.
+        if (externalDrivingRef.current && settingsRef.current.source === 'media') {
+          stop();
+          return;
+        }
         const s = settingsRef.current;
         if (s.speed <= 0) {
           stop();
@@ -110,7 +125,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
           render({
             canvas,
             settings: s,
-            image: imageRef.current,
+            image: effectiveImage(),
             zTime: zTime.current,
           });
         }
