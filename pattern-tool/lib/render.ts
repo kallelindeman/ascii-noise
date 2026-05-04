@@ -14,7 +14,7 @@
 //      the morphed annulus.
 
 import type { ImageData as PatternImageData, Settings } from './types';
-import { fbm3, lerp } from './noise';
+import { lerp, warpedFbm3 } from './noise';
 import { TILE_PARAMS, BLANK_PARAMS, lerpTileParams, drawMorphedTile } from './tiles';
 import { sampleImage } from './image';
 import { PAIRS, PALETTE } from './palette';
@@ -30,7 +30,6 @@ const GAIN            = 0.5;
 // Reusable typed buffers. Module-scoped so successive renders skip allocation
 // when the grid size is unchanged.
 let valsBuf = new Float32Array(0);
-let rankBuf = new Uint32Array(0);
 
 function aspectOf(settings: Settings): number {
   if (settings.aspect === 'custom') {
@@ -126,7 +125,6 @@ export function render({
 
   if (valsBuf.length < total) {
     valsBuf = new Float32Array(total);
-    rankBuf = new Uint32Array(total);
   }
 
   const sc = 1 / noiseScl;
@@ -137,6 +135,15 @@ export function render({
   const clipLo  = settings.clipLow;
   const clipHi  = settings.clipHigh;
   const clipRng = Math.max(0.0001, clipHi - clipLo);
+
+  // Noise configuration (internal). We keep these hardcoded for now; optional UI
+  // controls will override later.
+  const noiseType = settings.noiseType ?? 'simplex';
+  const warp01 = settings.warp01 ?? 0.65;
+  const warpAmp = lerp(0.0, 1.25, Math.max(0, Math.min(1, warp01)));
+  const warpFreq = lerp(0.6, 2.2, Math.max(0, Math.min(1, warp01)));
+  const noiseZ = zTime;
+
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
@@ -146,18 +153,45 @@ export function render({
         v = (lum - clipLo) / clipRng;
         if (v < 0) v = 0; else if (v > 1) v = 1;
       } else {
-        v = fbm3(c * sc, r * sc * 0.55, zTime, seed, octaves, LACUNARITY, GAIN);
+        // Noise is sampled in normalized canvas space so symbol size (cellsize)
+        // doesn't change the apparent noise feature scale.
+        const nx = c / cols;
+        const ny = r / rows;
+        v = warpedFbm3(
+          nx * noiseScl,
+          ny * noiseScl * 0.55,
+          noiseZ,
+          seed,
+          octaves,
+          LACUNARITY,
+          GAIN,
+          { amp: warpAmp, freq: warpFreq, type: noiseType },
+          noiseType,
+        );
       }
       valsBuf[i] = v;
-      rankBuf[i] = i;
     }
   }
 
-  // 2. Histogram-equalize → continuous tile index in [0, N]
-  rankBuf.subarray(0, total).sort((a, b) => valsBuf[a] - valsBuf[b]);
-  const denom = total > 1 ? total - 1 : 1;
+  // 2. Monotonic mapping → continuous tile index in [0, N]
+  // We *stretch* the observed range per-frame (min/max normalization) so the
+  // full symbol set is exercised, without the nonlocal rank swapping that comes
+  // from histogram sorting.
   const tileMap = new Float32Array(total);
-  for (let i = 0; i < total; i++) tileMap[rankBuf[i]] = (i / denom) * N;
+  let vMin = Infinity;
+  let vMax = -Infinity;
+  for (let i = 0; i < total; i++) {
+    const v = valsBuf[i];
+    if (v < vMin) vMin = v;
+    if (v > vMax) vMax = v;
+  }
+  const vRange = Math.max(1e-6, vMax - vMin);
+  const gamma = 0.85; // <1 boosts mids a bit; tweakable later
+  for (let i = 0; i < total; i++) {
+    const v01 = (valsBuf[i] - vMin) / vRange;
+    const curved = Math.pow(Math.max(0, Math.min(1, v01)), gamma);
+    tileMap[i] = curved * N;
+  }
 
   // 3. Resize canvas (supersampled) and set transform
   const physW = CW * renderScale;
@@ -203,7 +237,18 @@ export function render({
         const nx = (c + 0.5) / cols;
         const ny = (r + 0.5) / rows;
         const proj  = (nx * gradDx + ny * gradDy - projMin) / projRange;
-        const j     = fbm3(nx * jitterFreq, ny * jitterFreq, zTime * 0.1 + 100, seed + 31, 3, LACUNARITY, 0.5);
+        // Edge jitter should be subtle and temporally smooth; use lower warp.
+        const j     = warpedFbm3(
+          nx * jitterFreq,
+          ny * jitterFreq,
+          zTime * 0.06 + 100,
+          seed + 31,
+          2,
+          LACUNARITY,
+          0.55,
+          { amp: warpAmp * 0.25, freq: warpFreq * 0.9, type: noiseType },
+          noiseType,
+        );
         const projJ = proj + (j - 0.5) * gradEdge;
         const dist  = projJ - gradPos;
         if (dist < 0) continue;
