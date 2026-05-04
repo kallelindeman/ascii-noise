@@ -5,8 +5,8 @@
   "identifier": "com.abclabs.pattern-tool",
   "build": {
     "frontendDist": "../out",
-    "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "npm run dev -- --port 3000",
+    "devUrl": "http://localhost:3001",
+    "beforeDevCommand": "npm run dev -- --port 3001",
     "beforeBuildCommand": "npm run build"
   },
   "app": {
