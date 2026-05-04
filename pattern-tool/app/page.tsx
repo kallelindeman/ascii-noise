@@ -14,10 +14,11 @@ import { GradientControls } from '@/components/controls/gradient-controls';
 import { ColorsControls } from '@/components/controls/colors-controls';
 import { DEFAULT_SETTINGS, type Settings } from '@/lib/types';
 import type { MediaState } from '@/lib/media-types';
-import { exportPatternMp4FromVideo } from '@/lib/export/video-export';
-import { exportPatternMp4NativeFromVideo } from '@/lib/export/native-video-export';
+import { exportPatternLoopMp4Browser } from '@/lib/export/pattern-loop-export';
+import { exportPatternLoopMp4Native, exportPatternMp4NativeFromVideo } from '@/lib/export/native-video-export';
 import { isTauri } from '@/lib/tauri';
 import { toast } from 'sonner';
+import { Slider } from '@/components/ui/slider';
 
 export default function Page() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -25,6 +26,8 @@ export default function Page() {
   const [exporting, setExporting] = useState(false);
   const desktop = isTauri();
   const [exportMode, setExportMode] = useState<'browser' | 'native'>(desktop ? 'native' : 'browser');
+  const [exportType, setExportType] = useState<'png' | 'mp4'>('png');
+  const [loopSeconds, setLoopSeconds] = useState(5);
   const exportAbort = useRef<AbortController | null>(null);
   const canvasRef               = useRef<PatternCanvasHandle>(null);
 
@@ -76,7 +79,9 @@ export default function Page() {
   const handleDownload = useCallback(async () => {
     const canvas = canvasRef.current?.getCanvas();
     if (!canvas) return;
-    if (media.kind === 'video') {
+    if (exportType === 'mp4') {
+      // MP4 is always a procedural loop export. Disable when speed is 0.
+      if (settings.speed <= 0) return;
       if (exporting) {
         exportAbort.current?.abort();
         return;
@@ -87,15 +92,17 @@ export default function Page() {
       exportAbort.current = ac;
       try {
         if (desktop && exportMode === 'native') {
-          await exportPatternMp4NativeFromVideo(settings, media, {
+          await exportPatternLoopMp4Native(settings, {
             preset: '720p',
             signal: ac.signal,
             onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
+            durationSec: loopSeconds,
           });
         } else {
-          await exportPatternMp4FromVideo(settings, media, {
+          await exportPatternLoopMp4Browser(settings, {
             preset: '720p',
             onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
+            durationSec: loopSeconds,
           });
         }
         toast.success('MP4 exported', { id: t });
@@ -113,7 +120,7 @@ export default function Page() {
     a.download = `pattern-${canvas.width}x${canvas.height}.png`;
     a.href = canvas.toDataURL('image/png');
     a.click();
-  }, [exporting, media, settings]);
+  }, [exportType, exporting, loopSeconds, desktop, exportMode, settings]);
 
   const imageForRender = media.kind === 'image' ? media.data : null;
 
@@ -158,29 +165,61 @@ export default function Page() {
               onCheckedChange={(checked) => update({ transparent: checked })}
             />
           </div>
-          {desktop && media.kind === 'video' && (
-            <label className="mb-3 block">
-              <span className="mb-1 block text-xs font-medium text-muted-foreground">Export mode</span>
-              <select
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
-                value={exportMode}
-                onChange={(e) => setExportMode(e.target.value as 'browser' | 'native')}
-                disabled={exporting}
-              >
-                <option value="native">Export (native)</option>
-                <option value="browser">Export (browser)</option>
-              </select>
-            </label>
+          <label className="mb-3 block">
+            <span className="mb-1 block text-xs font-medium text-muted-foreground">Export as</span>
+            <select
+              className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+              value={exportType}
+              onChange={(e) => setExportType(e.target.value as 'png' | 'mp4')}
+              disabled={exporting}
+            >
+              <option value="png">Image (PNG)</option>
+              <option value="mp4">Video (MP4 loop)</option>
+            </select>
+          </label>
+
+          {exportType === 'mp4' && (
+            <div className="mb-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">Loop duration</span>
+                <span className="text-xs font-medium text-muted-foreground tabular-nums">{loopSeconds}s</span>
+              </div>
+              <Slider
+                min={3}
+                max={15}
+                step={1}
+                value={[loopSeconds]}
+                onValueChange={(v) => setLoopSeconds((v as number[])[0] ?? 5)}
+              />
+              {desktop && (
+                <div className="pt-1">
+                  <select
+                    className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                    value={exportMode}
+                    onChange={(e) => setExportMode(e.target.value as 'browser' | 'native')}
+                    disabled={exporting}
+                  >
+                    <option value="native">MP4 encoder: Native (FFmpeg)</option>
+                    <option value="browser">MP4 encoder: Browser (WebCodecs)</option>
+                  </select>
+                </div>
+              )}
+              {settings.speed <= 0 && (
+                <div className="text-xs text-muted-foreground">
+                  MP4 export is disabled when speed is 0. Increase speed to export a loop.
+                </div>
+              )}
+            </div>
           )}
           <Button
             onClick={handleDownload}
-            disabled={media.kind !== 'video' && exporting}
+            disabled={exporting || (exportType === 'mp4' && settings.speed <= 0)}
             className="w-full rounded-full font-semibold tracking-wide"
             size="lg"
           >
-            {media.kind === 'video'
-              ? (exporting ? 'Cancel export' : (desktop && exportMode === 'native' ? 'Export (native)' : 'Export MP4'))
-              : 'Download pattern'}
+            {exportType === 'mp4'
+              ? (exporting ? 'Cancel export' : 'Export MP4 loop')
+              : 'Download PNG'}
             <Download className="h-3.5 w-3.5" strokeWidth={2.2} />
           </Button>
         </footer>

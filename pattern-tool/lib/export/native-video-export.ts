@@ -156,3 +156,104 @@ export async function exportPatternMp4NativeFromVideo(
   }
 }
 
+export interface NativeExportLoopOptions {
+  preset?: '720p' | '1080p';
+  fps?: number;
+  durationSec: number;
+  onProgress?: (p: number) => void;
+  signal?: AbortSignal;
+}
+
+export async function exportPatternLoopMp4Native(
+  settings: Settings,
+  opts: NativeExportLoopOptions,
+): Promise<void> {
+  if (settings.speed <= 0) throw new Error('Pattern loop export requires speed > 0');
+
+  const preset = opts.preset ?? '720p';
+  const longEdge = presetLongEdge(preset);
+  const fps = Math.max(1, Math.round(opts.fps ?? 30));
+  const durationSec = Math.max(0.1, opts.durationSec);
+  const totalFrames = Math.max(1, Math.round(durationSec * fps));
+
+  const { CW, CH } = computeCanvasSizeWithLongEdge(settings, longEdge);
+  const outW = CW;
+  const outH = CH;
+
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = outW;
+  exportCanvas.height = outH;
+
+  const started = await invoke<{ export_id: string }>('native_export_start', {
+    args: { total_frames: totalFrames },
+  });
+  const exportId = started.export_id;
+
+  const unlisten = await listen<{ exportId: string; progress: number }>('native-export-progress', (e) => {
+    if (e.payload?.exportId !== exportId) return;
+    const p = 0.7 + 0.3 * Math.max(0, Math.min(1, e.payload.progress));
+    opts.onProgress?.(p);
+  });
+
+  const cancel = async () => {
+    try {
+      await invoke('native_export_cancel', { args: { export_id: exportId } });
+    } catch {
+      // ignore
+    }
+  };
+
+  try {
+    opts.signal?.addEventListener('abort', cancel, { once: true });
+
+    for (let i = 0; i < totalFrames; i++) {
+      if (opts.signal?.aborted) throw new Error('Export cancelled');
+
+      const t = i / fps;
+      render({
+        canvas: exportCanvas,
+        settings,
+        image: null,
+        zTime: t * settings.speed,
+        longEdgeOverride: longEdge,
+        renderScaleOverride: 1,
+      });
+
+      const pngBase64 = await canvasToPngBase64(exportCanvas);
+      await invoke('native_export_write_frame', {
+        args: {
+          export_id: exportId,
+          frame_index: i + 1,
+          png_base64: pngBase64,
+        },
+      });
+
+      opts.onProgress?.(0.7 * (i / totalFrames));
+      if (i % 10 === 0) await Promise.resolve();
+    }
+
+    const outputPath = await save({
+      title: 'Export MP4',
+      defaultPath: `pattern-loop-${outW}x${outH}-${durationSec.toFixed(1).replace('.', '_')}s.mp4`,
+      filters: [{ name: 'MP4', extensions: ['mp4'] }],
+    });
+
+    if (!outputPath) throw new Error('Export cancelled');
+
+    await invoke('native_export_finish', {
+      args: {
+        export_id: exportId,
+        output_path: outputPath,
+        fps,
+      },
+    });
+
+    opts.onProgress?.(1);
+  } catch (e) {
+    await cancel();
+    throw e;
+  } finally {
+    unlisten();
+  }
+}
+
