@@ -10,7 +10,32 @@ use std::{
 use tauri::{Emitter, State, Window};
 use uuid::Uuid;
 
-fn resolve_ffmpeg() -> Result<PathBuf, String> {
+fn resolve_ffmpeg(window: &Window) -> Result<PathBuf, String> {
+  // 1) Prefer bundled Tauri sidecar (ships with the app).
+  //
+  // We added this in `tauri.conf.json` under `bundle.externalBin`:
+  //   "externalBin": ["binaries/ffmpeg"]
+  //
+  // On macOS bundles, sidecars are typically placed alongside the main executable.
+  if let Ok(exe) = std::env::current_exe() {
+    if let Some(dir) = exe.parent() {
+      // First try plain name, then the target-suffixed name (dev scenarios).
+      let c1 = dir.join("ffmpeg");
+      if c1.is_file() {
+        return Ok(c1);
+      }
+      let c2 = dir.join("ffmpeg-aarch64-apple-darwin");
+      if c2.is_file() {
+        return Ok(c2);
+      }
+      let c3 = dir.join("ffmpeg-x86_64-apple-darwin");
+      if c3.is_file() {
+        return Ok(c3);
+      }
+    }
+  }
+
+  // 2) Allow override for dev/troubleshooting.
   if let Ok(p) = std::env::var("FFMPEG_PATH") {
     let pb = PathBuf::from(p);
     if pb.is_file() {
@@ -31,7 +56,10 @@ fn resolve_ffmpeg() -> Result<PathBuf, String> {
     }
   }
 
-  Err("ffmpeg not found. Install ffmpeg (e.g. `brew install ffmpeg`) or set FFMPEG_PATH to its full path.".to_string())
+  // Keep `window` in signature for future path resolver improvements without
+  // breaking API; it also helps when refactoring to `AppHandle.path()`.
+  let _ = window.label();
+  Err("ffmpeg not found. Install ffmpeg (e.g. `brew install ffmpeg`) or bundle it as a Tauri sidecar (`bundle.externalBin`). You can also set FFMPEG_PATH.".to_string())
 }
 
 #[derive(Clone, Default)]
@@ -172,7 +200,7 @@ async fn native_export_finish(window: Window, state: State<'_, ExportManager>, a
   }
 
   let input_pattern = dir.join("frame%06d.png");
-  let ffmpeg_path = resolve_ffmpeg()?;
+  let ffmpeg_path = resolve_ffmpeg(&window)?;
   let mut cmd = Command::new(ffmpeg_path);
   cmd
     .stdin(Stdio::null())
