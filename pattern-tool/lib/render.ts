@@ -168,6 +168,9 @@ export function render({
           { amp: warpAmp, freq: warpFreq, type: noiseType },
           noiseType,
         );
+        // Apply the same clip transform used for media luminance.
+        v = (v - clipLo) / clipRng;
+        if (v < 0) v = 0; else if (v > 1) v = 1;
       }
       valsBuf[i] = v;
     }
