@@ -10,6 +10,30 @@ use std::{
 use tauri::{Emitter, State, Window};
 use uuid::Uuid;
 
+fn resolve_ffmpeg() -> Result<PathBuf, String> {
+  if let Ok(p) = std::env::var("FFMPEG_PATH") {
+    let pb = PathBuf::from(p);
+    if pb.is_file() {
+      return Ok(pb);
+    }
+  }
+
+  // Common macOS install locations (Homebrew on Apple Silicon / Intel).
+  let candidates = [
+    "/opt/homebrew/bin/ffmpeg",
+    "/usr/local/bin/ffmpeg",
+    "/usr/bin/ffmpeg",
+  ];
+  for c in candidates {
+    let pb = PathBuf::from(c);
+    if pb.is_file() {
+      return Ok(pb);
+    }
+  }
+
+  Err("ffmpeg not found. Install ffmpeg (e.g. `brew install ffmpeg`) or set FFMPEG_PATH to its full path.".to_string())
+}
+
 #[derive(Clone, Default)]
 struct ExportManager(Arc<Mutex<HashMap<String, ExportJob>>>);
 
@@ -148,7 +172,8 @@ async fn native_export_finish(window: Window, state: State<'_, ExportManager>, a
   }
 
   let input_pattern = dir.join("frame%06d.png");
-  let mut cmd = Command::new("ffmpeg");
+  let ffmpeg_path = resolve_ffmpeg()?;
+  let mut cmd = Command::new(ffmpeg_path);
   cmd
     .stdin(Stdio::null())
     .stdout(Stdio::null())
@@ -179,7 +204,7 @@ async fn native_export_finish(window: Window, state: State<'_, ExportManager>, a
 
   let mut child = cmd.spawn().map_err(|e| {
     format!(
-      "Failed to start ffmpeg ({e}). Install ffmpeg and ensure it’s available on PATH."
+      "Failed to start ffmpeg ({e}). Install ffmpeg and ensure it’s available on PATH (or set FFMPEG_PATH)."
     )
   })?;
 
