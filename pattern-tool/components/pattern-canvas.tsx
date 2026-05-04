@@ -13,6 +13,10 @@ interface PatternCanvasProps {
 export interface PatternCanvasHandle {
   /** Returns the underlying canvas element (for export). */
   getCanvas: () => HTMLCanvasElement | null;
+  /** Imperatively update the media luminance buffer (for video). */
+  setMediaFrame: (frame: PatternImageData | null) => void;
+  /** Request a render on the next animation frame. */
+  requestRender: () => void;
 }
 
 /**
@@ -40,11 +44,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
     settingsRef.current = settings;
     imageRef.current    = image;
 
-    useImperativeHandle(ref, () => ({ getCanvas: () => canvasRef.current }), []);
-
-    // Schedule a render via rAF. Dropping or coalescing extra frames is fine
-    // because we always read the freshest settings from the ref at flush time.
-    useEffect(() => {
+    const scheduleRender = () => {
       if (rafRef.current != null) return;
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null;
@@ -57,6 +57,20 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
           zTime: zTime.current,
         });
       });
+    };
+
+    useImperativeHandle(ref, () => ({
+      getCanvas: () => canvasRef.current,
+      setMediaFrame: (frame) => {
+        imageRef.current = frame;
+      },
+      requestRender: () => scheduleRender(),
+    }), []);
+
+    // Schedule a render via rAF. Dropping or coalescing extra frames is fine
+    // because we always read the freshest settings from the ref at flush time.
+    useEffect(() => {
+      scheduleRender();
       return () => {
         if (rafRef.current != null) {
           cancelAnimationFrame(rafRef.current);
