@@ -76,7 +76,9 @@ export async function exportPatternMp4NativeFromVideo(
   );
 
   const started = await invoke<{ export_id: string }>('native_export_start', {
-    total_frames: totalFrames,
+    args: {
+      total_frames: totalFrames,
+    },
   });
   const exportId = started.export_id;
 
@@ -89,7 +91,7 @@ export async function exportPatternMp4NativeFromVideo(
 
   const cancel = async () => {
     try {
-      await invoke('native_export_cancel', { export_id: exportId });
+      await invoke('native_export_cancel', { args: { export_id: exportId } });
     } catch {
       // ignore
     }
@@ -116,9 +118,11 @@ export async function exportPatternMp4NativeFromVideo(
 
       const pngBase64 = await canvasToPngBase64(exportCanvas);
       await invoke('native_export_write_frame', {
-        export_id: exportId,
-        frame_index: i + 1,
-        png_base64: pngBase64,
+        args: {
+          export_id: exportId,
+          frame_index: i + 1,
+          png_base64: pngBase64,
+        },
       });
 
       opts.onProgress?.(0.7 * (i / totalFrames));
@@ -136,9 +140,11 @@ export async function exportPatternMp4NativeFromVideo(
     }
 
     await invoke('native_export_finish', {
-      export_id: exportId,
-      output_path: outputPath,
-      fps,
+      args: {
+        export_id: exportId,
+        output_path: outputPath,
+        fps,
+      },
     });
 
     opts.onProgress?.(1);
