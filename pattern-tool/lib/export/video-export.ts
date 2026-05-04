@@ -8,16 +8,15 @@ import { createVideoElement, createVideoLuminanceExtractor, loadVideoMetadata, s
 export type VideoExportPreset = '720p' | '1080p';
 
 export interface ExportVideoOptions {
-  preset?: VideoExportPreset;
+  longEdge?: number;
+  renderScale?: 1 | 2 | 4;
   /** Fallback fps when we can’t infer it. */
   fps?: number;
   /** Called with a value in [0, 1]. */
   onProgress?: (p: number) => void;
 }
 
-function presetLongEdge(preset: VideoExportPreset): number {
-  return preset === '1080p' ? 1920 : 1280;
-}
+const DEFAULT_LONG_EDGE = 2048;
 
 function clamp(n: number, lo: number, hi: number): number {
   if (n < lo) return lo;
@@ -72,8 +71,8 @@ export async function exportPatternMp4FromVideo(
     throw new Error('WebCodecs VideoEncoder is not available in this browser');
   }
 
-  const preset = opts.preset ?? '720p';
-  const longEdge = presetLongEdge(preset);
+  const longEdge = Math.max(16, Math.round(opts.longEdge ?? DEFAULT_LONG_EDGE));
+  const renderScale = opts.renderScale ?? 2;
   const fps = Math.max(1, Math.round(opts.fps ?? media.fpsHint ?? 30));
 
   const v = createVideoElement(media.url);
@@ -86,8 +85,8 @@ export async function exportPatternMp4FromVideo(
   const totalFrames = Math.max(1, Math.ceil(exportDuration * fps));
 
   const { CW, CH } = computeCanvasSizeWithLongEdge(settings, longEdge);
-  const outW = CW;
-  const outH = CH;
+  const outW = CW * renderScale;
+  const outH = CH * renderScale;
 
   const { encoderCodec, muxerCodec } = await pickVideoCodec(outW, outH, fps);
 
@@ -143,7 +142,7 @@ export async function exportPatternMp4FromVideo(
       image: lum,
       zTime: settings.speed > 0 ? t * settings.speed : 0,
       longEdgeOverride: longEdge,
-      renderScaleOverride: 1,
+      renderScaleOverride: renderScale,
     });
 
     const tsUs = Math.round((t - trimStart) * 1e6);

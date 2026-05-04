@@ -4,15 +4,14 @@ import { computeCanvasSizeWithLongEdge, render } from '@/lib/render';
 import type { Settings } from '@/lib/types';
 
 export interface ExportPatternLoopOptions {
-  preset?: '720p' | '1080p';
+  longEdge?: number;
+  renderScale?: 1 | 2 | 4;
   fps?: number;
   durationSec: number;
   onProgress?: (p: number) => void;
 }
 
-function presetLongEdge(preset: '720p' | '1080p'): number {
-  return preset === '1080p' ? 1920 : 1280;
-}
+const DEFAULT_LONG_EDGE = 2048;
 
 async function pickVideoCodec(width: number, height: number, fps: number): Promise<{
   encoderCodec: string;
@@ -67,15 +66,15 @@ export async function exportPatternLoopMp4Browser(
     throw new Error('Pattern loop export requires speed > 0');
   }
 
-  const preset = opts.preset ?? '720p';
-  const longEdge = presetLongEdge(preset);
+  const longEdge = Math.max(16, Math.round(opts.longEdge ?? DEFAULT_LONG_EDGE));
+  const renderScale = opts.renderScale ?? 2;
   const fps = Math.max(1, Math.round(opts.fps ?? 30));
   const durationSec = Math.max(0.1, opts.durationSec);
   const totalFrames = Math.max(1, Math.round(durationSec * fps));
 
   const { CW, CH } = computeCanvasSizeWithLongEdge(settings, longEdge);
-  const outW = CW;
-  const outH = CH;
+  const outW = CW * renderScale;
+  const outH = CH * renderScale;
 
   const { encoderCodec, muxerCodec } = await pickVideoCodec(outW, outH, fps);
 
@@ -114,7 +113,7 @@ export async function exportPatternLoopMp4Browser(
       image: null,
       zTime: t * settings.speed,
       longEdgeOverride: longEdge,
-      renderScaleOverride: 1,
+      renderScaleOverride: renderScale,
     });
 
     const tsUs = Math.round(t * 1e6);

@@ -16,6 +16,7 @@ import { DEFAULT_SETTINGS, type Settings } from '@/lib/types';
 import type { MediaState } from '@/lib/media-types';
 import { exportPatternLoopMp4Browser } from '@/lib/export/pattern-loop-export';
 import { exportPatternLoopMp4Native, exportPatternMp4NativeFromVideo } from '@/lib/export/native-video-export';
+import { exportPatternMp4FromVideo } from '@/lib/export/video-export';
 import { isTauri } from '@/lib/tauri';
 import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
@@ -28,6 +29,7 @@ export default function Page() {
   const [exportMode, setExportMode] = useState<'browser' | 'native'>(desktop ? 'native' : 'browser');
   const [exportType, setExportType] = useState<'png' | 'mp4'>('png');
   const [loopSeconds, setLoopSeconds] = useState(5);
+  const [exportScale, setExportScale] = useState<1 | 2 | 4>(2);
   const exportAbort = useRef<AbortController | null>(null);
   const canvasRef               = useRef<PatternCanvasHandle>(null);
 
@@ -80,8 +82,9 @@ export default function Page() {
     const canvas = canvasRef.current?.getCanvas();
     if (!canvas) return;
     if (exportType === 'mp4') {
-      // MP4 is always a procedural loop export. Disable when speed is 0.
-      if (settings.speed <= 0) return;
+      const videoDriven = media.kind === 'video' && settings.source === 'media';
+      // MP4 loop export disabled when speed is 0, but video-driven export is allowed.
+      if (!videoDriven && settings.speed <= 0) return;
       if (exporting) {
         exportAbort.current?.abort();
         return;
@@ -91,16 +94,29 @@ export default function Page() {
       const ac = new AbortController();
       exportAbort.current = ac;
       try {
-        if (desktop && exportMode === 'native') {
+        if (videoDriven) {
+          if (desktop && exportMode === 'native') {
+            await exportPatternMp4NativeFromVideo(settings, media, {
+              renderScale: exportScale,
+              signal: ac.signal,
+              onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
+            });
+          } else {
+            await exportPatternMp4FromVideo(settings, media, {
+              renderScale: exportScale,
+              onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
+            });
+          }
+        } else if (desktop && exportMode === 'native') {
           await exportPatternLoopMp4Native(settings, {
-            preset: '720p',
+            renderScale: exportScale,
             signal: ac.signal,
             onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
             durationSec: loopSeconds,
           });
         } else {
           await exportPatternLoopMp4Browser(settings, {
-            preset: '720p',
+            renderScale: exportScale,
             onProgress: (p) => toast.loading(`Exporting MP4… ${Math.round(p * 100)}%`, { id: t }),
             durationSec: loopSeconds,
           });
@@ -116,11 +132,29 @@ export default function Page() {
       return;
     }
 
+    // PNG export: resample the current preview canvas to requested scale.
+    // This guarantees the PNG matches what you're seeing (including video-driven frames).
+    const baseLongEdge = 2048;
+    const targetLongEdge = baseLongEdge * exportScale;
+    const curLongEdge = Math.max(canvas.width, canvas.height);
+    const k = targetLongEdge / curLongEdge;
+    const outW = Math.max(1, Math.round(canvas.width * k));
+    const outH = Math.max(1, Math.round(canvas.height * k));
+
+    const out = document.createElement('canvas');
+    out.width = outW;
+    out.height = outH;
+    const ctx = out.getContext('2d');
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(canvas, 0, 0, outW, outH);
+
     const a = document.createElement('a');
-    a.download = `pattern-${canvas.width}x${canvas.height}.png`;
-    a.href = canvas.toDataURL('image/png');
+    a.download = `pattern-${out.width}x${out.height}.png`;
+    a.href = out.toDataURL('image/png');
     a.click();
-  }, [exportType, exporting, loopSeconds, desktop, exportMode, settings]);
+  }, [exportType, exporting, loopSeconds, desktop, exportMode, settings, media, exportScale]);
 
   const imageForRender = media.kind === 'image' ? media.data : null;
 
@@ -180,6 +214,20 @@ export default function Page() {
 
           {exportType === 'mp4' && (
             <div className="mb-3 space-y-2">
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-muted-foreground">Resolution</span>
+                <select
+                  className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                  value={String(exportScale)}
+                  onChange={(e) => setExportScale((parseInt(e.target.value, 10) as 1 | 2 | 4) || 2)}
+                  disabled={exporting}
+                >
+                  <option value="1">1×</option>
+                  <option value="2">2×</option>
+                  <option value="4">4×</option>
+                </select>
+              </label>
+
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-muted-foreground">Loop duration</span>
                 <span className="text-xs font-medium text-muted-foreground tabular-nums">{loopSeconds}s</span>
@@ -206,19 +254,34 @@ export default function Page() {
               )}
               {settings.speed <= 0 && (
                 <div className="text-xs text-muted-foreground">
-                  MP4 export is disabled when speed is 0. Increase speed to export a loop.
+                  MP4 loop export is disabled when speed is 0. Increase speed to export a loop.
                 </div>
               )}
             </div>
           )}
+          {exportType === 'png' && (
+            <label className="mb-3 block">
+              <span className="mb-1 block text-xs font-medium text-muted-foreground">Resolution</span>
+              <select
+                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
+                value={String(exportScale)}
+                onChange={(e) => setExportScale((parseInt(e.target.value, 10) as 1 | 2 | 4) || 2)}
+                disabled={exporting}
+              >
+                <option value="1">1×</option>
+                <option value="2">2×</option>
+                <option value="4">4×</option>
+              </select>
+            </label>
+          )}
           <Button
             onClick={handleDownload}
-            disabled={exporting || (exportType === 'mp4' && settings.speed <= 0)}
+            disabled={exporting || (exportType === 'mp4' && !(media.kind === 'video' && settings.source === 'media') && settings.speed <= 0)}
             className="w-full rounded-full font-semibold tracking-wide"
             size="lg"
           >
             {exportType === 'mp4'
-              ? (exporting ? 'Cancel export' : 'Export MP4 loop')
+              ? (exporting ? 'Cancel export' : ((media.kind === 'video' && settings.source === 'media') ? 'Export MP4 (video)' : 'Export MP4 loop'))
               : 'Download PNG'}
             <Download className="h-3.5 w-3.5" strokeWidth={2.2} />
           </Button>

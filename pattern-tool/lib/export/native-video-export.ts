@@ -8,15 +8,14 @@ import type { MediaState } from '@/lib/media-types';
 import { createVideoElement, createVideoLuminanceExtractor, loadVideoMetadata, seekVideo } from '@/lib/video';
 
 export interface NativeExportVideoOptions {
-  preset?: '720p' | '1080p';
+  longEdge?: number;
+  renderScale?: 1 | 2 | 4;
   fps?: number;
   onProgress?: (p: number) => void;
   signal?: AbortSignal;
 }
 
-function presetLongEdge(preset: '720p' | '1080p'): number {
-  return preset === '1080p' ? 1920 : 1280;
-}
+const DEFAULT_LONG_EDGE = 2048;
 
 function clamp(n: number, lo: number, hi: number): number {
   if (n < lo) return lo;
@@ -49,8 +48,8 @@ export async function exportPatternMp4NativeFromVideo(
 ): Promise<void> {
   if (media.kind !== 'video') throw new Error('exportPatternMp4NativeFromVideo requires video media');
 
-  const preset = opts.preset ?? '720p';
-  const longEdge = presetLongEdge(preset);
+  const longEdge = Math.max(16, Math.round(opts.longEdge ?? DEFAULT_LONG_EDGE));
+  const renderScale = opts.renderScale ?? 2;
   const fps = Math.max(1, Math.round(opts.fps ?? media.fpsHint ?? 30));
 
   const v = createVideoElement(media.url);
@@ -63,8 +62,8 @@ export async function exportPatternMp4NativeFromVideo(
   const totalFrames = Math.max(1, Math.ceil(exportDuration * fps));
 
   const { CW, CH } = computeCanvasSizeWithLongEdge(settings, longEdge);
-  const outW = CW;
-  const outH = CH;
+  const outW = CW * renderScale;
+  const outH = CH * renderScale;
 
   const exportCanvas = document.createElement('canvas');
   exportCanvas.width = outW;
@@ -113,7 +112,7 @@ export async function exportPatternMp4NativeFromVideo(
         image: lum,
         zTime: settings.speed > 0 ? t * settings.speed : 0,
         longEdgeOverride: longEdge,
-        renderScaleOverride: 1,
+        renderScaleOverride: renderScale,
       });
 
       const pngBase64 = await canvasToPngBase64(exportCanvas);
@@ -157,7 +156,8 @@ export async function exportPatternMp4NativeFromVideo(
 }
 
 export interface NativeExportLoopOptions {
-  preset?: '720p' | '1080p';
+  longEdge?: number;
+  renderScale?: 1 | 2 | 4;
   fps?: number;
   durationSec: number;
   onProgress?: (p: number) => void;
@@ -170,15 +170,15 @@ export async function exportPatternLoopMp4Native(
 ): Promise<void> {
   if (settings.speed <= 0) throw new Error('Pattern loop export requires speed > 0');
 
-  const preset = opts.preset ?? '720p';
-  const longEdge = presetLongEdge(preset);
+  const longEdge = Math.max(16, Math.round(opts.longEdge ?? DEFAULT_LONG_EDGE));
+  const renderScale = opts.renderScale ?? 2;
   const fps = Math.max(1, Math.round(opts.fps ?? 30));
   const durationSec = Math.max(0.1, opts.durationSec);
   const totalFrames = Math.max(1, Math.round(durationSec * fps));
 
   const { CW, CH } = computeCanvasSizeWithLongEdge(settings, longEdge);
-  const outW = CW;
-  const outH = CH;
+  const outW = CW * renderScale;
+  const outH = CH * renderScale;
 
   const exportCanvas = document.createElement('canvas');
   exportCanvas.width = outW;
@@ -216,7 +216,7 @@ export async function exportPatternLoopMp4Native(
         image: null,
         zTime: t * settings.speed,
         longEdgeOverride: longEdge,
-        renderScaleOverride: 1,
+        renderScaleOverride: renderScale,
       });
 
       const pngBase64 = await canvasToPngBase64(exportCanvas);
