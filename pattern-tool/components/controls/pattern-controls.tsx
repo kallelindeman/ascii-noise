@@ -61,7 +61,7 @@ export function PatternControls({ settings, update }: PatternControlsProps) {
             label="Speed"
             value={settings.speed}
             min={0}
-            max={3}
+            max={0.2}
             step={0.01}
             onChange={(v) => update({ speed: v })}
             format={(v) => (v === 0 ? '0' : v.toFixed(2))}

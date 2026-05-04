@@ -23,7 +23,7 @@ export interface Settings {
   // Pattern noise
   seed: number;             // 0..999
   octaves: number;          // 1..8
-  speed: number;            // 0..3 — animation rate; 0 = static
+  speed: number;            // 0..0.2 — animation rate; 0 = static
   noiseType: NoiseType;     // simplex (default) or value (legacy)
   warp01: number;           // 0..1 — domain warp strength
 
