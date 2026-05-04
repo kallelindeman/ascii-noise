@@ -4,6 +4,8 @@ export type Source = 'pattern' | 'media';
 
 export type AspectPreset = '16:9' | '1:1' | '9:16' | '4:5' | '3:2' | 'custom';
 
+export type NoiseType = 'simplex' | 'value';
+
 /** Single source-of-truth for the canvas. Mirrors the prototype's state shape. */
 export interface Settings {
   source: Source;
@@ -22,6 +24,8 @@ export interface Settings {
   seed: number;             // 0..999
   octaves: number;          // 1..8
   speed: number;            // 0..3 — animation rate; 0 = static
+  noiseType: NoiseType;     // simplex (default) or value (legacy)
+  warp01: number;           // 0..1 — domain warp strength
 
   // Aspect ratio
   aspect: AspectPreset;
@@ -66,6 +70,8 @@ export const DEFAULT_SETTINGS: Settings = {
   seed: 1,
   octaves: 4,
   speed: 0.0,
+  noiseType: 'simplex',
+  warp01: 0.65,
   aspect: '16:9',
   aspectW: 16,
   aspectH: 9,

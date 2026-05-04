@@ -13,6 +13,12 @@ interface PatternCanvasProps {
 export interface PatternCanvasHandle {
   /** Returns the underlying canvas element (for export). */
   getCanvas: () => HTMLCanvasElement | null;
+  /** Imperatively update the media luminance buffer (for video). */
+  setMediaFrame: (frame: PatternImageData | null) => void;
+  /** If true, disables internal speed-based animation loop (video drives frames). */
+  setExternalFrameDriving: (driving: boolean) => void;
+  /** Request a render on the next animation frame. */
+  requestRender: () => void;
 }
 
 /**
@@ -36,15 +42,15 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
 
     // Latest values, accessed by the rAF loop without rebinding listeners.
     const settingsRef = useRef(settings);
-    const imageRef    = useRef(image);
+    const propImageRef = useRef<PatternImageData | null>(image);
+    const mediaFrameRef = useRef<PatternImageData | null>(null);
+    const externalDrivingRef = useRef(false);
     settingsRef.current = settings;
-    imageRef.current    = image;
+    propImageRef.current = image;
 
-    useImperativeHandle(ref, () => ({ getCanvas: () => canvasRef.current }), []);
+    const effectiveImage = () => mediaFrameRef.current ?? propImageRef.current;
 
-    // Schedule a render via rAF. Dropping or coalescing extra frames is fine
-    // because we always read the freshest settings from the ref at flush time.
-    useEffect(() => {
+    const scheduleRender = () => {
       if (rafRef.current != null) return;
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = null;
@@ -53,10 +59,27 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
         render({
           canvas,
           settings: settingsRef.current,
-          image: imageRef.current,
+          image: effectiveImage(),
           zTime: zTime.current,
         });
       });
+    };
+
+    useImperativeHandle(ref, () => ({
+      getCanvas: () => canvasRef.current,
+      setMediaFrame: (frame) => {
+        mediaFrameRef.current = frame;
+      },
+      setExternalFrameDriving: (driving) => {
+        externalDrivingRef.current = driving;
+      },
+      requestRender: () => scheduleRender(),
+    }), []);
+
+    // Schedule a render via rAF. Dropping or coalescing extra frames is fine
+    // because we always read the freshest settings from the ref at flush time.
+    useEffect(() => {
+      scheduleRender();
       return () => {
         if (rafRef.current != null) {
           cancelAnimationFrame(rafRef.current);
@@ -81,6 +104,12 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
       }
 
       const tick = (now: number) => {
+        // When a video is actively driving frames, do not also run the speed-based
+        // animation loop — it causes double renders and stutter.
+        if (externalDrivingRef.current && settingsRef.current.source === 'media') {
+          stop();
+          return;
+        }
         const s = settingsRef.current;
         if (s.speed <= 0) {
           stop();
@@ -96,7 +125,7 @@ export const PatternCanvas = forwardRef<PatternCanvasHandle, PatternCanvasProps>
           render({
             canvas,
             settings: s,
-            image: imageRef.current,
+            image: effectiveImage(),
             zTime: zTime.current,
           });
         }
