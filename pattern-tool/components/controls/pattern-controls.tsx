@@ -3,7 +3,6 @@
 import { Group } from './group';
 import { SliderRow } from './slider-row';
 import type { Settings } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ClipSlider } from './clip-slider';
 
 interface PatternControlsProps {
@@ -14,23 +13,6 @@ interface PatternControlsProps {
 export function PatternControls({ settings, update }: PatternControlsProps) {
   return (
     <Group label="Pattern">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-foreground">Noise</span>
-        </div>
-        <Select
-          value={settings.noiseType}
-          onValueChange={(v) => update({ noiseType: v as Settings['noiseType'] })}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Noise type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="simplex">Simplex (organic)</SelectItem>
-            <SelectItem value="value">Value (legacy)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
       <SliderRow
         label="Scale"
         value={Math.round(settings.gridsize01 * 100)}

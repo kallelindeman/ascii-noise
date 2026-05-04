@@ -138,7 +138,7 @@ export function render({
 
   // Noise configuration (internal). We keep these hardcoded for now; optional UI
   // controls will override later.
-  const noiseType = settings.noiseType ?? 'simplex';
+  const noiseType = 'simplex';
   const warp01 = settings.warp01 ?? 0.65;
   const warpAmp = lerp(0.0, 1.25, Math.max(0, Math.min(1, warp01)));
   const warpFreq = lerp(0.6, 2.2, Math.max(0, Math.min(1, warp01)));
