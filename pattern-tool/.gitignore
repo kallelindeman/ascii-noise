@@ -20,6 +20,10 @@
 # tauri
 /src-tauri/target/
 
+# local-only artifacts
+/dist/
+/.claude/
+
 # production
 /build
 
